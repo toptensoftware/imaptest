@@ -1,0 +1,175 @@
+{
+  "name": "INBOX",
+  "uidvalidity": 1651881846,
+  "highestmodseq": "907",
+  "highestuid": 307,
+  "uidnext": 309,
+  "messages": [
+    {
+      "uid": 192,
+      "message_id": "CAL_=jJizZQnrNK6f-qyzRNhoYyT9sq=dbrZ4M5JNwqki+UhpcA@mail.gmail.com",
+      "references": []
+    },
+    {
+      "uid": 202,
+      "message_id": "540e90c4728b1fec7c5202a1225ae02e@rocketskeleton.com",
+      "references": [
+        "CAL_=jJizZQnrNK6f-qyzRNhoYyT9sq=dbrZ4M5JNwqki+UhpcA@mail.gmail.com"
+      ]
+    },
+    {
+      "uid": 204,
+      "message_id": "919dd807b151e3db8b6359df8af28cc5@rocketskeleton.com",
+      "references": [
+        "CAL_=jJjQCXVGf6BAKhCdUy7NPr9anVmvEVEFy2XoCy7x39HdFw@mail.gmail.com"
+      ]
+    },
+    {
+      "uid": 216,
+      "message_id": "CAL_=jJjS8uUHsQXT_QN+i_UEnFop7bz=DVd+Q3iq4aUpjU_RJQ@mail.gmail.com",
+      "references": []
+    },
+    {
+      "uid": 217,
+      "message_id": "CAL_=jJio21iT4pb9207-khjZ3sEKhGXbuL97LsvS0x_WShOp-Q@mail.gmail.com",
+      "references": [
+        "a6832ba6a77ecdafeb3e066123036aed@rocketskeleton.com",
+        "CAL_=jJjS8uUHsQXT_QN+i_UEnFop7bz=DVd+Q3iq4aUpjU_RJQ@mail.gmail.com"
+      ]
+    },
+    {
+      "uid": 220,
+      "message_id": "de2c72b594795fd8be449110f81b670c@rocketskeleton.com",
+      "references": [
+        "CAL_=jJjS8uUHsQXT_QN+i_UEnFop7bz=DVd+Q3iq4aUpjU_RJQ@mail.gmail.com"
+      ]
+    },
+    {
+      "uid": 222,
+      "message_id": "CAC6JW3Zd0d+kWyeT0MbMr_RT13vBM-azQ0NSoy=d0pNnJtDmGQ@mail.gmail.com",
+      "references": []
+    },
+    {
+      "uid": 223,
+      "message_id": "30f332ead5c24f981de7bfd0fa2f22e3@rocketskeleton.com",
+      "references": [
+        "CAC6JW3Zd0d+kWyeT0MbMr_RT13vBM-azQ0NSoy=d0pNnJtDmGQ@mail.gmail.com"
+      ]
+    },
+    {
+      "uid": 225,
+      "message_id": "30f332ead5c24f981de7bfd0fa2f22e3@rocketskeleton.com",
+      "references": [
+        "CAC6JW3Zd0d+kWyeT0MbMr_RT13vBM-azQ0NSoy=d0pNnJtDmGQ@mail.gmail.com"
+      ]
+    },
+    {
+      "uid": 230,
+      "message_id": "eee878650bbd93297cf2f01cfaec7d8a@rocketskeleton.com",
+      "references": [
+        "30f332ead5c24f981de7bfd0fa2f22e3@rocketskeleton.com",
+        "CAC6JW3Zd0d+kWyeT0MbMr_RT13vBM-azQ0NSoy=d0pNnJtDmGQ@mail.gmail.com"
+      ]
+    },
+    {
+      "uid": 254,
+      "message_id": "919dd807b151e3db8b6359df8af28cc5@rocketskeleton.com",
+      "references": [
+        "CAL_=jJjQCXVGf6BAKhCdUy7NPr9anVmvEVEFy2XoCy7x39HdFw@mail.gmail.com"
+      ]
+    },
+    {
+      "uid": 256,
+      "message_id": "CAL_=jJjS8uUHsQXT_QN+i_UEnFop7bz=DVd+Q3iq4aUpjU_RJQ@mail.gmail.com",
+      "references": []
+    },
+    {
+      "uid": 267,
+      "message_id": "919dd807b151e3db8b6359df8af28cc5@rocketskeleton.com",
+      "references": [
+        "CAL_=jJjQCXVGf6BAKhCdUy7NPr9anVmvEVEFy2XoCy7x39HdFw@mail.gmail.com"
+      ]
+    },
+    {
+      "uid": 270,
+      "message_id": "9f1090d05c64e8c71b5d06de9d35ee45@rocketskeleton.com",
+      "references": [
+        "CAL_=jJjS8uUHsQXT_QN+i_UEnFop7bz=DVd+Q3iq4aUpjU_RJQ@mail.gmail.com",
+        "CAL_=jJio21iT4pb9207-khjZ3sEKhGXbuL97LsvS0x_WShOp-Q@mail.gmail.com"
+      ]
+    },
+    {
+      "uid": 272,
+      "message_id": "c23f5efdf7a3c3e2cf623fe0ce2fd86e@rocketskeleton.com",
+      "references": []
+    },
+    {
+      "uid": 273,
+      "message_id": "edb9d184a0aa231a38433bb2f92c7468@rocketskeleton.com",
+      "references": []
+    },
+    {
+      "uid": 274,
+      "message_id": "20220511072025.ECDAE6008C@mxdev.toptensoftware.com",
+      "references": []
+    },
+    {
+      "uid": 280,
+      "message_id": "CAL_=jJizZQnrNK6f-qyzRNhoYyT9sq=dbrZ4M5JNwqki+UhpcA@mail.gmail.com",
+      "references": []
+    },
+    {
+      "uid": 283,
+      "message_id": "CAL_=jJgeNCSbKaibqhtWAc9LXp690guRHAspS5VsFz8EYVqmtA@mail.gmail.com",
+      "references": [
+        "540e90c4728b1fec7c5202a1225ae02e@rocketskeleton.com",
+        "CAL_=jJizZQnrNK6f-qyzRNhoYyT9sq=dbrZ4M5JNwqki+UhpcA@mail.gmail.com"
+      ]
+    },
+    {
+      "uid": 285,
+      "message_id": "CAL_=jJjS8uUHsQXT_QN+i_UEnFop7bz=DVd+Q3iq4aUpjU_RJQ@mail.gmail.com",
+      "references": []
+    },
+    {
+      "uid": 293,
+      "message_id": "CAL_=jJhRMj0CCvD68xs=RXejHQM8LAJ-b1vY2WXNf9c_swUBbw@mail.gmail.com",
+      "references": [
+        "20220513224433.d8ac1ec18fbe4209@mailgun.patreon.com"
+      ]
+    },
+    {
+      "uid": 295,
+      "message_id": "2398045b8c9eecb4a1b969288742b263@rocketskeleton.com",
+      "references": []
+    },
+    {
+      "uid": 304,
+      "message_id": "8c6db73e0128c9b56a46b61a3d71b6df@rocketskeleton.com",
+      "references": []
+    },
+    {
+      "uid": 305,
+      "message_id": "CAL_=jJgKtzkysr0+zZ8dJ6Xq+reM7SCfFVdKw1O=sk_Em0mz4w@mail.gmail.com",
+      "references": [
+        "8c6db73e0128c9b56a46b61a3d71b6df@rocketskeleton.com"
+      ]
+    },
+    {
+      "uid": 306,
+      "message_id": "CAC6JW3ad6J0pUAthj-M1G82WmknAen0_xMq+a5UW4mjPNhqk-w@mail.gmail.com",
+      "references": [
+        "8b9f2709d60021fc2076ee732283f28c@rocketskeleton.com",
+        "8c6db73e0128c9b56a46b61a3d71b6df@rocketskeleton.com",
+        "CAL_=jJgKtzkysr0+zZ8dJ6Xq+reM7SCfFVdKw1O=sk_Em0mz4w@mail.gmail.com"
+      ]
+    },
+    {
+      "uid": 307,
+      "message_id": "f64b499701b28b6bb8623e96d5dd2f80@rocketskeleton.com",
+      "references": [
+        "8c6db73e0128c9b56a46b61a3d71b6df@rocketskeleton.com"
+      ]
+    }
+  ]
+}
