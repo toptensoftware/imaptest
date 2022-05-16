@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "jsonfile": "^6.1.0",
-    "node-imap": "^0.9.6"
+    "node-imap": "^0.9.6",
+    "readline-sync": "^1.4.10"
   }
 }
