@@ -722,8 +722,15 @@ async function main()
     {
         console.log("loading user");
         await user.load();
+
+        performance.mark("sync-start")
+        await user.open();
+        performance.mark("sync-end")
+        performance.measure("sync", "sync-start", "sync-end")
+
         console.log(`Mailboxes: ${user.boxes.size}`);
         console.log(`Messages:  ${user.totalMessageCount}`);
+
         performance.mark("buildIndex-start")
         await user.buildIndex();
         performance.mark("buildIndex-end")
@@ -760,8 +767,8 @@ async function main()
 
         /*
         await user.open();
-        await user.close();
         */
+       await user.close();
 
         ///readline.question("Done");
         console.log("done");
