@@ -64,6 +64,7 @@ async function main()
         performance.mark("buildConvs-end")
         performance.measure("buildConvs", "buildConvs-start", "buildConvs-end")
 
+        /*
         let uid = 0;
         let low = 0;
         for (let i=0; i<1000; i++)
@@ -88,6 +89,7 @@ async function main()
             if (binpos)
                 low = binpos;
         }
+        */
 
         /*
         //let testMessage = "CAEr=6tNk5XbERB_=Lipib3zAnpGOexhQqKggyqY4ZmdDvMFMvA@mail.gmail.com";

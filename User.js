@@ -1,6 +1,10 @@
 const Imap = require('node-imap');
-const Mailbox = require('./Mailbox');
 const jsonfile = require('jsonfile');
+
+const utils = require('./utils');
+const Mailbox = require('./Mailbox');
+const Conversation = require('./Conversation');
+const MessageMap = require('./MessageMap');
 
 /**
  * Manages the mailboxes for a particular user on an IMAP server and handles
@@ -70,66 +74,97 @@ class User
             return;
 
         // A map of message id to an array of { mailbox, message }
-        this._mapMessageId = new Map();
+        this._mapMessageId = new MessageMap();
 
         // A map where the value is a array of messages-id of messages
         // that reference to the key message-id.  This is the inverse
         // of message.references
-        this._referencedBy = new Map();
+        this._referencedBy = new MessageMap();
 
         // Make conversation map now, will use later
         this._mapMessageToConversation = new Map();
 
         // Keep track of how many messages have no message-id
-        let noMessageIdCount = 0;
+        this._noMessageIdCount = 0;
 
         // For all boxes
         for (let b of this._boxes.values())
         {
-            // Iterate all messages
-            let messages = b.messages;
-            let length = messages.length;
-            for (let i=0; i<length; i++)
-            {
-                // Get the message its Id
-                let m = messages[i];
-                let msg_id = m.message_id;
-                if (!msg_id)
-                {
-                    noMessageIdCount++;
-                    continue;
-                }
-
-                // Add it to the map
-                let e = this._mapMessageId.get(msg_id);
-                if (e === undefined)
-                {
-                    e = [];
-                    this._mapMessageId.set(msg_id, e);
-                }
-                e.push({ message: m, mailbox: b});
-
-                // Also make a map of the messages which messages
-                // reference which
-                if (m.references)
-                {
-                    for (let j=0; j<m.references.length; j++)
-                    {
-                        let e = this._referencedBy.get(m.references[j]);
-                        if (e === undefined)
-                        {
-                            e = new Set();
-                            this._referencedBy.set(m.references[j], e);
-                        }
-                        e.add(msg_id);
-                    }
-                }
-            }
+            this.addMessagesToIndicies(b, b.messages);
         }
 
         console.log(`unique messages: ${this._mapMessageId.size}`);
         console.log(`referenced messages: ${this._referencedBy.size}`);
-        console.log(`messages without id: ${noMessageIdCount}`);
+        console.log(`messages without id: ${this._noMessageIdCount}`);
+    }
+
+    addMessagesToIndicies(b, messages)
+    {
+        // Quit if not indexed yet
+        if (this._mapMessageId === undefined)
+            return;
+
+        // Iterate all messages
+        let length = messages.length;
+        for (let i=0; i<length; i++)
+        {
+            // Get the message its Id
+            let m = messages[i];
+            let msg_id = m.message_id;
+            if (!msg_id)
+            {
+                this._noMessageIdCount++;
+                continue;
+            }
+
+            let mbm = { message: m, mailbox: b};
+
+            // Add it to the map
+            this._mapMessageId.add(msg_id, mbm);
+
+            // Also make a map of the messages which messages
+            // reference which
+            if (m.references)
+            {
+                for (let j=0; j<m.references.length; j++)
+                {
+                    this._referencedBy.add(m.references[j], mbm);
+                }
+            }
+        }
+    }
+
+    removeMessagesFromIndicies(b, messages)
+    {
+        // Quit if not indexed yet
+        if (this._mapMessageId === undefined)
+            return;
+
+        // Iterate all messages
+        let length = messages.length;
+        for (let i=0; i<length; i++)
+        {
+            // Get the message its Id
+            let m = messages[i];
+            let msg_id = m.message_id;
+            if (!msg_id)
+            {
+                this._noMessageIdCount--;
+                continue;
+            }
+
+            // Remove from message id map
+            this._mapMessageId.remove(msg_id, m);
+
+            // Remove from the referenced by map
+            if (m.references)
+            {
+                for (let j=0; j<m.references.length; j++)
+                {
+                    this._referencedBy.remove(m.references[j], m);
+                }
+            }
+        }
     }
 
     /**
@@ -149,19 +184,19 @@ class User
         this.#getAllReferences(msg_id, messages);
         messages = [...messages];
 
+        // Convert message ids to array of message references
+        messages = messages.map(x => this._mapMessageId.get(x));
+
         // Sort messages by date
         messages.sort((a, b) => {
-            let msga = this._mapMessageId.get(a);
-            let msgb = this._mapMessageId.get(b);
-            if (!msga || !msgb)
-                debugger;
-            return msga.date - msgb.date;
+            return a[0].message.date - b[0].message.date;
         });
 
+        let first = messages[0];
+        let last = messages[messages.length-1];
+
         // Create a new conversation with those messages
-        conv = {
-            messages: messages,
-        };
+        conv = new Conversation(messages);
 
         // Associate this conversation with all the messages in the conversation
         for (let i=0; i<messages.length; i++)
@@ -186,35 +221,38 @@ class User
 
         // Look up the message
         let msgs = this._mapMessageId.get(msg_id);
-        if (!msgs)
-            return;
-
-        // Add this message to the set
-        result.add(msg_id);
-
-        // Recursively add all the referenced messages
         if (msgs)
         {
-            for (let i=0; i<msgs.length; i++)
+            // Add this message to the set
+            result.add(msg_id);
+
+            // Recursively add all the referenced messages
+            if (msgs)
             {
-                let refs = msgs[i].message.references;
-                if (refs)
+                for (let i=0; i<msgs.length; i++)
                 {
-                    for (let j=0; j<refs.length; j++)
+                    let refs = msgs[i].message.references;
+                    if (refs)
                     {
-                        this.#getAllReferences(refs[j], result);
+                        for (let j=0; j<refs.length; j++)
+                        {
+                            this.#getAllReferences(refs[j], result);
+                        }
                     }
                 }
             }
         }
 
         // Also add all the messages that reference this one
+        // NB: do this even if we don't know msg_id.  This allows
+        //     messages to be connected even if common ancestor
+        //     has been deleted
         let refs = this._referencedBy.get(msg_id);
         if (refs)
         {
-            for (let m of refs)
+            for (let mbm of refs)
             {
-                this.#getAllReferences(m, result);
+                this.#getAllReferences(mbm.message.message_id, result);
             }
         }
     }
@@ -367,7 +405,25 @@ class User
         return `${this.storageBase}.json`;
     }
 
-
+    /**
+     * Called from Mailbox when sync operation completes
+     * @param {Mailbox} mailbox 
+     * @param {SyncInfo} sync_info 
+     */
+    on_mailbox_sync(mailbox, sync_info)
+    {
+        // Update our message map
+        if (sync_info.did_reload)
+        {
+            this._mapMessageId.removeMailbox(mailbox);
+            this._referencedBy.removeMailbox(mailbox);
+        }
+        else
+        {
+            this.addMessagesToIndicies(mailbox, sync_info.added_messages);
+            this.removeMessagesFromIndicies(mailbox, sync_info.deleted_messages);
+        }
+    }
 }
 
 

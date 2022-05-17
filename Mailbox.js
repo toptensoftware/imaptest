@@ -1,6 +1,7 @@
 const Imap = require('node-imap');
 const utils = require('./utils');
 const jsonfile = require('jsonfile');
+const { info } = require('console');
 const inspect = require('util').inspect;
 
 /**
@@ -102,11 +103,13 @@ class Mailbox
 
         console.log(`syncing ${this.name} ${this._box.messages.total} messages...`)
 
-        // Track sync stats
-        this.sync_info = {
-            added_messages: 0,
-            deleted_messages: 0,
-            flagged_messages: 0,
+        // Track sync info
+        this._sync_info = {
+            added_messages: [],
+            deleted_messages: [],
+            flagged_messages: [],
+            did_reload: false,
+            sync_error: false,
         }
 
         let isDirty = false;
@@ -144,18 +147,42 @@ class Mailbox
             }
         }
 
+        // If there was a sync error then do a full reload
+        if (this._sync_info.sync_error)
+        {
+            await this.#fetchAll();
+            isDirty = true;
+            this._sync_info.sync_error = false;
+        }
+
         // Save changes
         if (isDirty)
         {
             await this.save();
         }
 
-        if (this.sync_info.added_messages != 0)
-            console.log(`  - added:   ${this.sync_info.added_messages}`);
-        if (this.sync_info.deleted_messages != 0)
-            console.log(`  - deleted: ${this.sync_info.deleted_messages}`);
-        if (this.sync_info.flagged_messages != 0)
-            console.log(`  - flagged: ${this.sync_info.flagged_messages}`);
+        // Notify changes
+        if(this._sync_info.did_reload)
+        {
+            if (this._sync_info.did_reload)
+                console.log("  - reloaded");
+            this._sync_info.added_messages = null;
+            this._sync_info.deleted_messages = null;
+            this._sync_info.flagged_messages = null;
+        }
+        else
+        {
+            if (this._sync_info.added_messages.length != 0)
+                console.log(`  - added:   ${this._sync_info.added_messages.length}`);
+            if (this._sync_info.deleted_messages.length != 0)
+                console.log(`  - deleted: ${this._sync_info.deleted_messages.length}`);
+            if (this._sync_info.flagged_messages.length != 0)
+                console.log(`  - flagged: ${this._sync_info.flagged_messages.length}`);
+        }
+        
+        // Notify owning user
+        this._user.on_mailbox_sync(this, this._sync_info);
+        this._sync_info = null;
 
         //console.log(`Synced ${this.name}`)
         this._box = null;
@@ -219,14 +246,15 @@ class Mailbox
 
                     this._data.messages.push(m);
 
-                    this.sync_info.added_messages++;
-
                     // Update the highest seen uid
                     if (m.uid > this._data.highestuid)
                         this._data.highestuid = m.uid;
-                    
-                    // Mark dirty
-                    this._dirty = true;
+
+                    // Track new messages (unless in reload)
+                    if (!this._sync_info.did_reload)
+                    {
+                        this._sync_info.added_messages.push(m);
+                    }
                 });
             });
 
@@ -242,16 +270,18 @@ class Mailbox
      */
     async #fetchAll()
     {
+        this._sync_info.did_reload = true;
+
         this._data.uidvalidity = this._box.uidvalidity;
         this._data.highestmodseq = this._box.highestmodseq;
         this._data.highestuid = 0;
         this._data.uidnext = this._box.uidnext;
         this._data.messages = [];
 
-        if (this._box.messages.total == 0)
-            return Promise.resolve();
-
-        return this.#fetch("1:*", false);
+        if (this._box.messages.total != 0)
+        {
+            await this.#fetch("1:*", false);
+        }
     }
 
     /**
@@ -265,8 +295,9 @@ class Mailbox
         // Box completely emptied?
         if (this._box.messages.total == 0)
         {
+            this._sync_info.deleted_messages = this._data.messages;
             this._data.messages = [];
-            return Promise.resolve();
+            return;
         }
 
         // Use ESearch if supported
@@ -298,8 +329,7 @@ class Mailbox
             else
             {
                 // Deleted message
-                //console.log(`message ${old_messages[idst].uid} deleted`)
-                this.sync_info.deleted_messages++;
+                this._sync_info.deleted_messages.push(old_messages[idst]);
             }
         }
 
@@ -309,14 +339,12 @@ class Mailbox
         {
             // Store new messages array
             this._data.messages = new_messages;
-            return true;
+            return;
         }
 
         // We didn't get to the end of the UID list so something has gone
         // awry.  Refresh everything.
-        await this.#fetchAll();
-
-        return false;
+        info.sync_error = true;
     }
 
     /**
@@ -345,19 +373,24 @@ class Mailbox
                     if (m_index !== undefined)
                     {
                         let m = this._data.messages[m_index];
-                        if (m.uid != msg_attrs.uid)
-                            debugger;
+
+                        // Track what changed
+                        let info = {
+                            message : m
+                        };
+                            
+                        // Unread changed?
                         let unread = msg_attrs.flags.indexOf('\\Seen') < 0;
-                        let delta = 0;
                         if (unread != !!m.unread)
                         {
                             if (unread)
                                 m.unread = true;
                             else
                                 delete m.unread;
-                            delta = 1;
+                            info.unread_changed = true;
                         }
 
+                        // Important changed?
                         let important = msg_attrs.flags.indexOf('\\Flagged') >= 0;
                         if (important != !!m.important)
                         {
@@ -365,10 +398,12 @@ class Mailbox
                                 m.important = true;
                             else
                                 delete m.important;
-                            delta = 1;
+                            info.important_changed = true;
                         }
 
-                        this.sync_info.flagged_messages += delta;
+                        // Track it
+                        if (info.unread_changed || info.important_changed)
+                            this._sync_info.flagged_messages.push(info);
                     }
                 });
             });

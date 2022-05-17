@@ -1,5 +1,19 @@
 class utils
 {
+    // Filter an array inplace using predicate callback
+    // Returns true if array was modified
+    static inplace_filter(arr, predicate)
+    {
+        let original_length = arr.length;
+        let i = original_length;
+        while (i--)
+        {
+            if (!predicate(arr[i]))
+                arr.splice(i, 1);
+        }
+        return arr.length != original_length;
+    }
+
     static get_combined_header_value(hdrs, key)
     {
         let arr = hdrs[key];
