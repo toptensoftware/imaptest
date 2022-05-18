@@ -8,7 +8,7 @@ const inspect = require('util').inspect;
         user: 'test001',
         password: 'pass',
         host: 'localhost',
-        port: 33143,
+        port: 44143,
         tls: false,
         debug: console.log
     }

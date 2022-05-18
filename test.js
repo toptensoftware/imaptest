@@ -3,7 +3,7 @@ const data = require('./data');
 
 (async function() {
 
-    await data.open("mongodb://localhost:33017/?directConnection=true", "imapsync");
+    await data.open("mongodb://localhost:44017/?directConnection=true", "imapsync");
 
     let user = new User({
         user: 'brad@rocketskeleton.com',
