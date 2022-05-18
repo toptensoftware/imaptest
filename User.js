@@ -1,4 +1,4 @@
-const Imap = require('node-imap');
+const Imap = require('./imap_promise');
 
 const { Db } = require('mongodb');
 const utils = require('./utils');
@@ -19,7 +19,7 @@ class User
     constructor(config)
     {
         // Create IMAP connection
-        this._imap = new Imap(config)
+        this._imap = new Imap(config);
 
         this.config = config;
         this._isOpen = false;
@@ -41,31 +41,32 @@ class User
         }
 
         // Find by message id (in any folder)
-        this.messages_collection.createIndex({
+        let mcoll = data.db.collection(this.messages_collection_name);
+        mcoll.createIndex({
             message_id: 1,
         });
 
         // Find by uid in folder
-        this.messages_collection.createIndex({
+        mcoll.createIndex({
             mailbox: 1, 
             uid: 1,
         });
 
         // Find in references
-        this.messages_collection.createIndex({
+        mcoll.createIndex({
             references: 1,
         });
 
         // Unread flag
-        this.messages_collection.createIndex({
+        mcoll.createIndex({
             mailbox: 1,
             unread: 1,
         });
     }
 
-    get messages_collection()
+    get messages_collection_name()
     {
-        return data.db.collection(`messages ${this.config.host} ${this.config.user}`);
+        return `messages ${this.config.host} ${this.config.user}`;
     }
 
 
@@ -81,30 +82,10 @@ class User
         this._isOpen = true;
 
         // Open connection
-        await new Promise((resolve, reject) => {
-
-            // Connect ok
-            this._imap.once('ready', function() {
-                resolve();
-            });
-
-            // Connect fail
-            this._imap.once('error', function(err) {
-                reject(err);
-            })
-
-            this._imap.connect();
-        });
+        await this._imap.connect();
 
         // Get list of boxes
-        let boxes = await new Promise((resolve, reject) => {
-            this._imap.getBoxes((err, boxes) => {
-                if (err)
-                    reject(resolve)
-                else
-                    resolve(boxes);
-            });
-        });
+        let boxes = await this._imap.getBoxes();
 
         // Wrap imap box objects with our Mailbox class
         for (let e of Object.entries(boxes))
@@ -147,14 +128,13 @@ class User
 
     async sync()
     {
-        await data.transaction(async () => {
+        await data.transaction(async (tx) => {
 
             // Sync all folders
             for (var mb of this.mailboxes.values())
             {
-                await mb.sync();
+                await mb.sync(tx);
             }
-
         }); 
     }
 
@@ -174,13 +154,7 @@ class User
             return Promise.resolve();
 
         // Close connection
-        this._imap.end();
-            
-        // Wait for it
-        return new Promise((resolve, reject) => {
-            this._imap.once('close', resolve);
-            this._imap.once('error', reject);
-        });
+        return this._imap.disconnect();
     }
 }
 

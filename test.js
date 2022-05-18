@@ -3,17 +3,17 @@ const data = require('./data');
 
 (async function() {
 
-    await data.open();
+    await data.open("mongodb://localhost:33017/?directConnection=true", "imapsync");
 
     let user = new User({
-        /*
         user: 'brad@rocketskeleton.com',
         password: 'rafiki23',
         host: 'mxdev.toptensoftware.com',
-        */
+        /*
         user: 'brad@toptensoftware.com',
         password: 'ormapkrcwiipjwik-1U',
         host: 'mx2.toptensoftware.com',
+        */
         port: 993,
         tls: true,
         //debug: console.log
@@ -25,4 +25,6 @@ const data = require('./data');
     await user.close();
     
     await data.close();
+
+    console.log("Finished");
 })();
