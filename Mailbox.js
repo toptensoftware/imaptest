@@ -1,8 +1,6 @@
 const Imap = require('node-imap');
 const utils = require('./utils');
-const jsonfile = require('jsonfile');
-const { info } = require('console');
-const inspect = require('util').inspect;
+const data = require('./data');
 
 /**
  * Manages the local cache of a single mailbox on an IMAP server
@@ -13,30 +11,32 @@ class Mailbox
      * Constructs a new Mailbox instance
      * @constructor
      * @param {User} user A reference to the owning User object
-     * @param {string} name The name of the mailbox on the IMAP server
+     * @param {string} name The name of the mailbox
+     * @param {Object} mailbox The mailbox object returned from imap
      */
     constructor(user, name)
     {
         this._user = user;
         this._name = name;
-        this._data = null;
         this._box = null;
+        this._data = {};
+        this._data.highestuid = 0;
     }
 
-    /**
-     * The currently loaded collection of messages
-     * @type {object[]}
-     */
-     get messages() { return this._data.messages }
-
-    /**
-     * The name of the storage file for this Mailbox
-     */
-    get storage() 
+    initFromDb(data)
     {
-        return `${this._user.storageBase}-${this.name}.json`;
+        this._data = data;
     }
- 
+
+    async updateFromImap(mailbox)
+    {
+        // Update new data
+        Object.assign(this._data, mailbox);
+
+        // Save
+        await this.updateDb();
+    }
+
     /**
      * The name of the mailbox on the IMAP server
      */
@@ -44,48 +44,12 @@ class Mailbox
  
  
     /**
-     * Load the Mailbox's cache data (unless already loaded)
-     * @async
-     * @returns {Promise<void>}
-     */
-    async load()
-    {
-        // Load data from file
-        if (this._data == null)
-        {
-            try
-            {
-                this._data = await jsonfile.readFile(this.storage);
-            }
-            catch (err) { /* don't care */}
-        }
-
-        // Create default (empty) data
-        if (this._data == null)
-        {
-            this.clearAllData();
-        }
-    }
-
-    /**
-     * Saves the mailbox cache
-     */
-    async save()
-    {
-        await jsonfile.writeFile(this.storage, this._data, { spaces: 2 });
-    }
-
-    /**
      * Synchronise the local cache for the mailbox with the IMAP server
      * @async
      * @returns {Promise<void>}
      */
     async sync()
     {
-        // Create default empty data?
-        if (!this._data)
-            this.clearAllData();
-
         // Open the box
         this._box = await new Promise((resolve, reject) => 
         {
@@ -110,9 +74,13 @@ class Mailbox
             flagged_messages: [],
             did_reload: false,
             sync_error: false,
-        }
+        }    
+        
+        if (this.name == "Archive")
+            debugger;
 
         let isDirty = false;
+        let old_highest_uid = this._data.highestuid;
 
         // If uid validity has changed, clear everything
         if (this._box.uidvalidity != this._data.uidvalidity)
@@ -120,19 +88,20 @@ class Mailbox
             // Fetch everything
             await this.#fetchAll();
             isDirty = true;
-        }
+        }    
         else
         {
             // Fetch any new messages
             if (this._data.uidnext != this._box.uidnext)
             {
                 await this.#fetch(`${this._data.highestuid + 1}:*`, true);
-                this._data.uidnext = this._box.uidnext;
                 isDirty = true;
             }
 
             // Are there any deleted messages?
-            if (this._data.messages.length != this._box.messages.total)
+            let current_message_count = await this._user.messages_collection.count({ mailbox: this._name });
+            current_message_count += this._sync_info.added_messages.length;
+            if (current_message_count != this._box.messages.total)
             {
                 await this.#trimDeletedMessages();
                 isDirty = true;
@@ -141,12 +110,12 @@ class Mailbox
             // Any flags changed?
             if (this._data.highestmodseq < this._box.highestmodseq)
             {
-                await this.#syncFlags();
-                this._data.highestmodseq = this._box.highestmodseq;
+                await this.#syncFlags(old_highest_uid);
                 isDirty = true;
             }
         }
 
+        /*
         // If there was a sync error then do a full reload
         if (this._sync_info.sync_error)
         {
@@ -154,11 +123,41 @@ class Mailbox
             isDirty = true;
             this._sync_info.sync_error = false;
         }
+        */
+
+        // Update data
+        this._data.highestmodseq = this._box.highestmodseq;
+        this._data.uidnext = this._box.uidnext;
+        this._data.uidvalidity = this._box.uidvalidity;
+
+        // Save new messages
+        if (this._sync_info.added_messages.length)
+        {
+            await this._user.messages_collection.insertMany(
+                this._sync_info.added_messages
+            );
+        }
+
+        // Delete removed messages
+        if (this._sync_info.deleted_messages.length)
+        {
+            await this._user.messages_collection.deleteMany({
+                uid: { $in: this._sync_info.deleted_messages }
+            });
+        }
+
+        // Update flags
+        if (this._sync_info.flagged_messages.length)
+        {
+            await this._user.messages_collection.bulkWrite(
+                this._sync_info.flagged_messages
+            );
+        }
 
         // Save changes
         if (isDirty)
         {
-            await this.save();
+            await this.updateDb();
         }
 
         // Notify changes
@@ -179,13 +178,28 @@ class Mailbox
             if (this._sync_info.flagged_messages.length != 0)
                 console.log(`  - flagged: ${this._sync_info.flagged_messages.length}`);
         }
-        
-        // Notify owning user
-        this._user.on_mailbox_sync(this, this._sync_info);
-        this._sync_info = null;
 
         //console.log(`Synced ${this.name}`)
         this._box = null;
+        this._sync_info = null;
+    }
+
+    async updateDb()
+    {
+        await data.db.collection("mailboxes").updateOne(
+            {
+                user: this._user.config.user,
+                host: this._user.config.host,
+                name: this._name,
+            }, 
+            {
+                $set: this._data,
+            },
+            {
+                upsert: true
+            }
+        );
+
     }
 
     /**
@@ -204,265 +218,197 @@ class Mailbox
      * @returns {void}
      * @async
      */
-    #fetch(range, is_uid_range)
-    {
-        return new Promise((resolve, reject) => {
-        
-            let src = is_uid_range ? this.#imap : this.#imap.seq;
-            let fetch = src.fetch(range, {
-                bodies: 'HEADER.FIELDS (DATE MESSAGE-ID REFERENCES IN-REPLY-TO)'
-            });
+     #fetch(range, is_uid_range)
+     {
+         return new Promise((resolve, reject) => {
+         
+             let src = is_uid_range ? this.#imap : this.#imap.seq;
+             let fetch = src.fetch(range, {
+                 bodies: 'HEADER.FIELDS (DATE SUBJECT MESSAGE-ID REFERENCES IN-REPLY-TO)'
+             });
+ 
+             fetch.on('message', (fetch_msg, seqno) => {
+                 let msg_hdrs = {};
+                 let msg_attrs = {};
+                 fetch_msg.on('body', function(stream, info) 
+                 {
+                     let buffer = "";
+                     stream.on('data', (chunk) => {
+                         let str = chunk.toString('utf8');
+                         buffer += str;
+                     });
+                     stream.on('end', () => {
+                         msg_hdrs = Imap.parseHeader(buffer);
+                     });
+                 });
+                 fetch_msg.once('attributes', (attrs) => {
+                     msg_attrs = attrs;
+                 })
+                 fetch_msg.once('end', () => {
+                     // Create message entry
+                     let m = {
+                         mailbox: this.name,
+                         date: msg_hdrs.date ? Math.floor(new Date(msg_hdrs.date[0]).getTime()/1000) : 0,
+                         subject: msg_hdrs.subject ? msg_hdrs.subject[0] : null,
+                         uid: msg_attrs.uid,
+                     };
 
-            fetch.on('message', (fetch_msg, seqno) => {
-                let msg_hdrs = {};
-                let msg_attrs = {};
-                fetch_msg.on('body', function(stream, info) 
-                {
-                    let buffer = "";
-                    stream.on('data', (chunk) => {
-                        let str = chunk.toString('utf8');
-                        buffer += str;
-                    });
-                    stream.on('end', () => {
-                        msg_hdrs = Imap.parseHeader(buffer);
-                    });
-                });
-                fetch_msg.once('attributes', (attrs) => {
-                    msg_attrs = attrs;
-                })
-                fetch_msg.once('end', () => {
-                    // Create message entry
-                    let m = {
-                        date: msg_hdrs.date ? Math.floor(new Date(msg_hdrs.date[0]).getTime()/1000) : 0,
-                        uid: msg_attrs.uid,
-                        message_id: utils.clean_message_id(msg_hdrs),
-                        references: utils.clean_references(msg_hdrs),
-                    };
-                    
-                    if (msg_attrs.flags.indexOf('\\Seen') < 0)
-                        m.unread = true;
-                    if (msg_attrs.flags.indexOf('\\Flagged') >= 0)
-                        m.important = true;
+                     // Clean id and refs
+                     let mid = utils.clean_message_id(msg_hdrs);
+                     let refs = utils.clean_references(msg_hdrs);
 
-                    this._data.messages.push(m);
-
-                    // Update the highest seen uid
-                    if (m.uid > this._data.highestuid)
-                        this._data.highestuid = m.uid;
-
-                    // Track new messages (unless in reload)
-                    if (!this._sync_info.did_reload)
-                    {
-                        this._sync_info.added_messages.push(m);
-                    }
-                });
-            });
-
-            fetch.once('error', reject);
-            fetch.once('end', resolve);
-        });
-    }
-
-    /**
-     * Fetches all messages in the mailbox and resets all other meta data
-     * @async
-     * @returns {Promise<void>}
-     */
-    async #fetchAll()
-    {
-        this._sync_info.did_reload = true;
-
-        this._data.uidvalidity = this._box.uidvalidity;
-        this._data.highestmodseq = this._box.highestmodseq;
-        this._data.highestuid = 0;
-        this._data.uidnext = this._box.uidnext;
-        this._data.messages = [];
-
-        if (this._box.messages.total != 0)
-        {
-            await this.#fetch("1:*", false);
-        }
-    }
-
+                     // Assign optional
+                     if (mid)
+                        m.message_id = mid;
+                     if (refs)
+                        m.references = refs;
+                     if (msg_attrs.flags.indexOf('\\Seen') < 0)
+                         m.unread = true;
+                     if (msg_attrs.flags.indexOf('\\Flagged') >= 0)
+                         m.important = true;
+ 
+                     // Update the highest seen uid
+                     if (m.uid > this._data.highestuid)
+                         this._data.highestuid = m.uid;
+ 
+                     // Track new messages (unless in reload)
+                    this._sync_info.added_messages.push(m);
+                 });
+             });
+ 
+             fetch.once('error', reject);
+             fetch.once('end', resolve);
+         });
+     }
+ 
+     /**
+      * Fetches all messages in the mailbox and resets all other meta data
+      * @async
+      * @returns {Promise<void>}
+      */
+     async #fetchAll()
+     {
+         this._sync_info.did_reload = true;
+ 
+         this._data.highestuid = 0;
+ 
+         if (this._box.messages.total != 0)
+         {
+             await this.#fetch("1:*", false);
+         }
+     }
+ 
     /**
      * Trims deleted messages from the Mailbox by querying the IMAP server for all
      * current UIDs and removing any from our local cache that no longer exist
      * @async
      * @returns {Promise<void>}
      */
-    async #trimDeletedMessages()
-    {
-        // Box completely emptied?
-        if (this._box.messages.total == 0)
-        {
-            this._sync_info.deleted_messages = this._data.messages;
-            this._data.messages = [];
-            return;
-        }
+     async #trimDeletedMessages()
+     {
+         // Use ESearch if supported
+         let isESearch = this.#imap.serverSupports('ESEARCH');
+         let search_fn = isESearch ? this.#imap.esearch : this.#imap.search;
+ 
+         // Get all uids
+         let uids = await new Promise((resolve, reject) => {
+             search_fn.call(this.#imap, [ 'ALL' ], (err, result) => {
+                 if (err)
+                     reject(err);
+                 else
+                     resolve(isESearch ? result.all : result);
+             });
+         });
+ 
+         // Iterate imap messages
+         let iter_imap = utils.iterate_uids(uids, isESearch);
 
-        // Use ESearch if supported
-        let isESearch = this.#imap.serverSupports('ESEARCH');
-        let search_fn = isESearch ? this.#imap.esearch : this.#imap.search;
+         // Iterate db messages
+         let iter_db = this._user.messages_collection.find(
+             { mailbox: this.name },
+             { projection: { _id: 0, uid: 1 } }
+         ).sort({uid: 1});
 
-        // Get all uids
-        let uids = await new Promise((resolve, reject) => {
-            search_fn.call(this.#imap, [ 'ALL' ], (err, result) => {
-                if (err)
-                    reject(err);
-                else
-                    resolve(isESearch ? result.all : result);
-            });
-        });
+         // Find missing
+         await iter_db.forEach(x => {
 
-        // Trim messages
-        let old_messages = this._data.messages;
-        let new_messages = [];
-        let iter = utils.iterate_uids(uids, isESearch);
-        for (let idst=0; idst < old_messages.length; idst++)
-        {
-            // Matching uid?
-            if (!iter.eof() && old_messages[idst].uid == iter.current())
+             // Matching uid?
+            if (x.uid == iter_imap.current())
             {
-                new_messages.push(old_messages[idst]);
-                iter.next();
+                iter_imap.next();
             }
             else
             {
-                // Deleted message
-                this._sync_info.deleted_messages.push(old_messages[idst]);
+                this._sync_info.deleted_messages.push(x.uid);
             }
-        }
+         });
 
-        // If we finished iterating the uid list then
-        // things look ok
-        if (iter.eof())
-        {
-            // Store new messages array
-            this._data.messages = new_messages;
-            return;
-        }
-
-        // We didn't get to the end of the UID list so something has gone
-        // awry.  Refresh everything.
-        info.sync_error = true;
-    }
-
-    /**
-     * Synchronizes modified flags from the server
-     * @async
-     * @returns {Promise<void>}
-     */
-    async #syncFlags()
-    {
-        return new Promise((resolve, reject) => {
-        
-            let fetch = this.#imap.fetch("1:*", { 
-                modifiers: {
-                    changedsince: this._data.highestmodseq 
-                }
-            });
-
-            fetch.on('message', (fetch_msg, seqno) => {
-                let msg_attrs = {};
-                fetch_msg.once('attributes', (attrs) => {
-                    msg_attrs = attrs;
-                })
-                fetch_msg.once('end', () => {
-
-                    let m_index = this.findUID(msg_attrs.uid);
-                    if (m_index !== undefined)
-                    {
-                        let m = this._data.messages[m_index];
-
-                        // Track what changed
-                        let info = {
-                            message : m
+         // If we finished iterating the uid list then
+         // things look ok
+         if (!iter_imap.eof())
+         {
+             // We didn't get to the end of the UID list so something has gone
+             // awry.  Refresh everything.
+             info.sync_error = true;
+             return;
+         }
+     }
+ 
+     /**
+      * Synchronizes modified flags from the server
+      * @async
+      * @returns {Promise<void>}
+      */
+     async #syncFlags(old_highest_uid)
+     {
+         return new Promise((resolve, reject) => {
+         
+             let fetch = this.#imap.fetch(`1:${old_highest_uid}`, { 
+                 modifiers: {
+                     changedsince: this._data.highestmodseq 
+                 }
+             });
+ 
+             fetch.on('message', (fetch_msg, seqno) => {
+                 let msg_attrs = {};
+                 fetch_msg.once('attributes', (attrs) => {
+                     msg_attrs = attrs;
+                    })
+                    fetch_msg.once('end', () => {
+                        
+                        let update = {
+                            $set: {},
+                            $unset: {},
                         };
-                            
-                        // Unread changed?
+
                         let unread = msg_attrs.flags.indexOf('\\Seen') < 0;
-                        if (unread != !!m.unread)
-                        {
-                            if (unread)
-                                m.unread = true;
-                            else
-                                delete m.unread;
-                            info.unread_changed = true;
-                        }
-
-                        // Important changed?
+                        if (unread)
+                            update.$set.unread = true;
+                        else
+                            update.$unset.unread = true;
+                        
                         let important = msg_attrs.flags.indexOf('\\Flagged') >= 0;
-                        if (important != !!m.important)
-                        {
-                            if (important)
-                                m.important = true;
-                            else
-                                delete m.important;
-                            info.important_changed = true;
-                        }
+                        if (important)
+                            update.$set.important = true;
+                        else
+                            update.$unset.important = true;
 
-                        // Track it
-                        if (info.unread_changed || info.important_changed)
-                            this._sync_info.flagged_messages.push(info);
-                    }
-                });
-            });
-
-            fetch.once('error', reject);
-            fetch.once('end', resolve);
-        });
-    }
-
-    /**
-     * Finds the index of a message with the specified UID
-     * @param {Number} value the UID to search for
-     * @param {Number} low optional low index to start from (useful when searching for sorted UIDs)
-     * @returns {Number|undefined} the zero based index of the message with the matching UID
-     */
-    findUID(value, low) 
-    {
-        if (low === undefined)
-            low = 0;
-
-        let array = this._data.messages;
-        if (array.length == 0)
-            return;
-        let high = array.length - 1;
-    
-        if (value < array[low] || value > array[high]) 
-            return;
-    
-        while (high >= low) 
-        {
-            let mid = (high + low) >> 1;
-            let midval = array[mid].uid;
-            
-            if (value == midval)
-                return mid;
-
-            if (value < midval)
-                high = mid - 1;
-            else
-                low = mid + 1;
-        }
-    
-        return;
-    }
-
-    /**
-     * Clears all loaded cache data
-     */
-    clearAllData()
-    {
-        this._data = {
-            name: this._name,
-            uidvalidity: null,
-            highestmodseq: null,
-            highestuid: 0,
-            uidnext: null,
-            messages: []
-        }
-    }
+                        this._sync_info.flagged_messages.push({
+                            updateOne: {
+                                filter: { uid: msg_attrs.uid },
+                                update: update
+                            }
+                        })
+                        
+                 });
+             });
+ 
+             fetch.once('error', reject);
+             fetch.once('end', resolve);
+         });
+     }
+ 
+ 
 }
 
 module.exports = Mailbox;

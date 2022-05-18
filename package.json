@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "jsonfile": "^6.1.0",
+    "mongodb": "^4.6.0",
     "node-imap": "^0.9.6",
     "readline-sync": "^1.4.10"
   }
