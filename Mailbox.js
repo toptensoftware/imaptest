@@ -50,7 +50,7 @@ class Mailbox
         // Open the box
         this._box = await this.#imap.openBox(this._name);
 
-        console.log(`syncing ${this.name} ${this._box.messages.total} messages...`)
+        console.log(`syncing ${this._user.messages_collection_name} ${this.name} ${this._box.messages.total} messages...`)
 
         // Track sync info
         this._sync_info = {
@@ -204,7 +204,8 @@ class Mailbox
      */
      #fetch(range, is_uid_range)
      {
-        return this.#imap.fetch(range, 
+         let kind = is_uid_range ? this.#imap : this.#imap.seq;
+         return kind.fetchHeaders(range, 
             {
                 bodies: 'HEADER.FIELDS (DATE SUBJECT MESSAGE-ID REFERENCES IN-REPLY-TO)',
                 seq: !is_uid_range
@@ -242,23 +243,23 @@ class Mailbox
             }
         );
      }
- 
-     /**
-      * Fetches all messages in the mailbox and resets all other meta data
-      * @async
-      * @returns {Promise<void>}
-      */
-     async #fetchAll()
-     {
-         this._sync_info.did_reload = true;
- 
-         this._data.highestuid = 0;
- 
-         if (this._box.messages.total != 0)
-         {
-             await this.#fetch("1:*", false);
-         }
-     }
+
+    /**
+     * Fetches all messages in the mailbox and resets all other meta data
+     * @async
+     * @returns {Promise<void>}
+     */
+    async #fetchAll()
+    {
+        this._sync_info.did_reload = true;
+
+        this._data.highestuid = 0;
+
+        if (this._box.messages.total != 0)
+        {
+            await this.#fetch("1:*", false);
+        }
+    }
  
     /**
      * Trims deleted messages from the Mailbox by querying the IMAP server for all
@@ -318,7 +319,7 @@ class Mailbox
       */
      async #syncFlags(old_highest_uid)
      {
-         await this.#imap.fetch(`1:${old_highest_uid}`, 
+         await this.#imap.fetchHeaders(`1:${old_highest_uid}`, 
             { 
                 modifiers: { changedsince: this._data.highestmodseq  }
             },

@@ -1,6 +1,4 @@
 const Imap = require('./imap_promise');
-
-const { Db } = require('mongodb');
 const utils = require('./utils');
 const Mailbox = require('./Mailbox');
 const data = require('./data');
@@ -42,23 +40,23 @@ class User
 
         // Find by message id (in any folder)
         let mcoll = data.db.collection(this.messages_collection_name);
-        mcoll.createIndex({
+        await mcoll.createIndex({
             message_id: 1,
         });
 
         // Find by uid in folder
-        mcoll.createIndex({
+        await mcoll.createIndex({
             mailbox: 1, 
             uid: 1,
         });
 
         // Find in references
-        mcoll.createIndex({
+        await mcoll.createIndex({
             references: 1,
         });
 
         // Unread flag
-        mcoll.createIndex({
+        await mcoll.createIndex({
             mailbox: 1,
             unread: 1,
         });
@@ -128,6 +126,7 @@ class User
 
     async sync()
     {
+        console.log(`Syncing ${this.messages_collection_name}`);
         await data.transaction(async (tx) => {
 
             // Sync all folders
@@ -154,7 +153,7 @@ class User
             return Promise.resolve();
 
         // Close connection
-        return this._imap.disconnect();
+        return this._imap.end();
     }
 }
 

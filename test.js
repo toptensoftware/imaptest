@@ -16,7 +16,7 @@ const data = require('./data');
         */
         port: 993,
         tls: true,
-        //debug: console.log
+        debug: console.log
     });
 
     await user.load();

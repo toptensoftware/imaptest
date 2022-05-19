@@ -1,5 +1,32 @@
 class utils
 {
+    static day_names = [
+        "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat",
+    ];
+
+    static month_names = [
+        "Jan", "Feb", "Mar", "Apr",
+        "May", "Jun", "Jul", "Aug",
+        "Sep", "Oct", "Nov", "Dec"
+    ];
+
+    static format_email_date(d)
+    {
+        let offs = d.getTimezoneOffset();
+        let sign = offs < 0 ? '+' : '-';
+        offs = Math.abs(offs);
+        return  utils.day_names[d.getDay()] + 
+                ", " + d.getDate() + 
+                " " + utils.month_names[d.getMonth()] + 
+                " " + d.getFullYear() + 
+                " " + String(d.getHours()).padStart(2, '0') + 
+                ":" + String(d.getMinutes()).padStart(2, '0') + 
+                ":" + String(d.getSeconds()).padStart(2, '0') + 
+                " " + sign
+                    + String(Math.floor(offs/60)).padStart(2, '0') 
+                    + String(offs % 60).padStart(2, '0');
+    }
+
     // Filter an array inplace using predicate callback
     // Returns true if array was modified
     static inplace_filter(arr, predicate)

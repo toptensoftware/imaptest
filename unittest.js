@@ -41,19 +41,12 @@ This is the message!
 
     //let uid = await imap.append(body, { });
 
-    // Get all messages
-    /*
-    await imap.fetch("1:*", { bodies: 'HEADER.FIELDS (DATE SUBJECT MESSAGE-ID REFERENCES IN-REPLY-TO)', seq: true }, (m) => {
-        console.log(inspect(m));
-    });
-    */
-
     let result = await imap.esearch(['ALL']);
     console.log(inspect(result));
 
     // Close connection
     console.log("disconnecting");
-    await imap.disconnect();
+    await imap.end();
     console.log("disconnected");
 
 })();
