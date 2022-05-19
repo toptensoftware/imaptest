@@ -12,9 +12,9 @@
                 "<node_internals>/**"
             ],
             "args": [
-                "export", "332"
+                "search", "ALL"
             ],
-            "program": "${workspaceFolder}\\test.js"
+            "program": "${workspaceFolder}\\imaptool.js"
         },
         {            
             "type": "pwa-node",            

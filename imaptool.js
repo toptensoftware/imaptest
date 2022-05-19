@@ -1,8 +1,10 @@
 const inspect = require('util').inspect;
+const fs = require('fs');
+const path = require('path');
+const glob = require('glob');
 
 const { program } = require('commander');
 
-const accounts = require('./accounts');
 const Imap = require('./imap_promise');
 
 let _action;
@@ -10,17 +12,18 @@ let _action;
 function register(action) { _action = action }
 
 program
-    .option('-a, --account <account>', 'the account to use', 'default')
+    .option('-c, --config', "config file", "imaptool.config.json")
+    .option('-a, --account <account>', 'the account to use')
     .option('-d, --debug', 'display IMAP log', false);
 
 program.command('caps')
-    .description("Show IMAP server capabilities")
+    .description("Show server capabilities")
     .action((options) => register(async (imap) => {
         console.log(imap.imap._caps.join("\n"));
     }));
 
 program.command('boxes')
-    .description("List IMAP mailboxes")
+    .description("List mailboxes")
     .option('--details', "Show mailbox details", false)
     .option('--status', "Shown mailbox status", false)
     .action((options) => register(async (imap) => {
@@ -44,29 +47,29 @@ program.command('boxes')
             {
                 if (!output.name)
                     output.name = k;
-                console.log(inspect(output));
+                console.log(JSON.stringify(output, null, 4));
             }
             else
-                console.log(" mailbox:", k);
+                console.log(k);
         }
     }));
 
-program.command('addbox')
-    .description("Add an IMAP mailbox")
+program.command('mkbox')
+    .description("Add a mailbox")
     .argument('<name>', "The new mailbox name")
     .action((name, options) => register(async (imap) => {
         await imap.addBox(name);
     }));
 
-program.command('delbox')
-    .description("Remove an IMAP mailbox")
+program.command('rmbox')
+    .description("Remove a mailbox")
     .argument('<name>', "The mailbox to delete")
     .action((name, options) => register(async (imap) => {
         await imap.delBox(name);
     }));
 
-program.command('renamebox')
-    .description("Rename an IMAP mailbox")
+program.command('mvbox')
+    .description("Rename a mailbox")
     .argument('<from>', "The mailbox to rename")
     .argument('<to>', "The new mailbox name")
     .action((from, to, options) => register(async (imap) => {
@@ -74,7 +77,7 @@ program.command('renamebox')
     }));
 
 program.command('esearch')
-    .description("Run an IMAP esearch")
+    .description("Run an esearch")
     .argument('<criteria>', "The search criteria")
     .option('-m, --mailbox <mailbox>', "The mailbox name", "INBOX")
     .action((criteria, options) => register(async (imap) => {
@@ -86,7 +89,7 @@ program.command('esearch')
     }));
 
 program.command('search')
-    .description("Run an IMAP search")
+    .description("Run a search")
     .argument('<criteria>', "The search criteria")
     .option('-m, --mailbox <mailbox>', "The mailbox name", "INBOX")
     .action((criteria, options) => register(async (imap) => {
@@ -98,7 +101,7 @@ program.command('search')
     }));
 
 program.command('thread')
-    .description("Run an IMAP thread search")
+    .description("Run a thread search")
     .argument('<criteria>', "The search criteria")
     .option('--algorithm <algorithn>', "The threading algorithm", "REFERENCES")
     .option('-m, --mailbox <mailbox>', "The mailbox name", "INBOX")
@@ -106,13 +109,13 @@ program.command('thread')
 
         await imap.openBox(options.mailbox);
         let msgs = await imap.thread(options.algorithm, criteria);
-        console.log(inspect(msgs, { depth: 100 } ) );
+        console.log(JSON.stringify(msgs));
 
     }));
 
 
-program.command('headers')
-    .description("Fetch IMAP headers and attributes")
+program.command('fetch')
+    .description("Fetch messages headers and attributes")
     .argument('<uids...>', "The uids to fetch")
     .option('--fields <fields...>', "The fields to fetch", [ "FROM", "TO", "SENDER", "DATE", "SUBJECT", "MESSAGE-ID" ])
     .option('-m, --mailbox <mailbox>', "The mailbox name", "INBOX")
@@ -145,8 +148,8 @@ program.command('headers')
 
     }));
 
-program.command('move')
-    .description("Move messages between IMAP mailboxes")
+program.command('mv')
+    .description("Move messages between mailboxes")
     .argument('<from>', "The source mailbox")
     .argument('<to>', "The target mailbox")
     .argument('<uids...>', "The messages to move")
@@ -156,8 +159,8 @@ program.command('move')
     }));
 
 
-program.command('copy')
-    .description("Copy messages between IMAP mailboxes")
+program.command('cp')
+    .description("Copy messages between mailboxes")
     .argument('<from>', "The source mailbox")
     .argument('<to>', "The target mailbox")
     .argument('<uids...>', "The messages to copy")
@@ -168,7 +171,7 @@ program.command('copy')
 
 
 program.command('flags')
-    .description("Set flags on IMAP mailbox messages")
+    .description("Set message flags")
     .option('-m, --mailbox <mailbox>', "The mailbox name", "INBOX")
     .argument('<uids...>', "The messages to copy")
     .option('-a, --add <add...>', "The flags to add")
@@ -214,13 +217,21 @@ program.command('flags')
 
 
 program.command('export')
-    .description("Export messages from an IMAP mailbox")
+    .description("Export messages from a mailbox")
     .argument('<uids...>', "The messages to export")
     .option('-m, --mailbox <mailbox>', "The mailbox name", "INBOX")
-    .option('-o, --out <filename>', "The output file name (use placeholderd $folder & $uid)")
+    .option('-o, --out <filename>', "The output file name (use placeholderd $mailbox & $uid)", "export-$mailbox-$uid.eml")
     .action((uids, options) => register(async (imap) => {
 
         await imap.openBox(options.mailbox);
+
+        // Work out output folder
+        let folder = path.dirname(options.out
+            .replace(/\$mailbox/g, options.mailbox)
+            .replace(/\$uid/g, "1"));
+
+        // Make sure it exists
+        fs.mkdirSync(folder, { recursive: true })
 
         await new Promise((resolve, reject) => {
 
@@ -231,23 +242,25 @@ program.command('export')
             fetch.on('message', (msg, seqno) => {
 
                 let attributes = {};
-                let body = "";
 
-                msg.on('body', function(stream) 
+                msg.on('body', function(stream, info) 
                 {
-                    stream.on('data', (chunk) => {
-                        let str = chunk.toString('utf8');
-                        body += str;
-                    });
-                    stream.on('end', () => {
-                    });
+                    // Work out temp file name
+                    let tempfile = path.join(folder, `imap-export-${info.seqno}.tmp`)
+                    let tempstream = fs.createWriteStream(tempfile);
+                    stream.pipe(tempstream);
+                    stream.once('close', () => {
+                        // Rename file now that we know the uid
+                        let filename = options.out
+                            .replace(/\$mailbox/g, options.mailbox)
+                            .replace(/\$uid/g, attributes.uid);
+                        fs.renameSync(tempfile, filename);
+                        console.log(`${filename}`)
+                    })
                 });
                 msg.once('attributes', (attrs) => {
                     attributes = attrs;
                 })
-                msg.once('end', () => {
-                    debugger;
-                });
             });
 
             // Resolve/reject
@@ -259,17 +272,97 @@ program.command('export')
 
     }));
 
+program.command('import')
+    .description("Import messages to a mailbox")
+    .argument('<files...>', "The files to import")
+    .option('--flags <flags...>', "Flags for the appended messages")
+    .option('-m, --mailbox <mailbox>', "The target mailbox name")
+    .action((files, options) => register(async (imap) => {
+
+        // Glob only works with forward slashes, so fix what the
+        // user gave us (if windows)
+        let fixbs;
+        if (path.sep == '\\')
+        {
+            fixbs = new RegExp("\\" + path.sep, 'g');
+            unfix = new RegExp("/", 'g');
+        }
+
+        // Global all files
+        let fileset = [];
+        for (let f of files)
+        {
+            if (fixbs)
+                f = f.replace(fixbs, "/")
+
+            let g = await new Promise((resolve, reject) => {
+                glob(f, {}, function (err, files) {
+                    if (err)
+                        reject(err);
+                    else
+                        resolve(files);
+                })
+            });
+            
+            fileset = [...fileset, ...g]
+        }
+
+        // Handle backslashes again
+        if (unfix)
+        {
+            fileset = fileset.map(x => x.replace(unfix, path.sep));
+        }
+
+        // Quit if nothing
+        if (!fileset.length)
+            return;
+
+        // Setup append options
+        let append_options = {
+            mailbox: options.mailbox,
+            flags: options.flags,
+        }
+
+        // Append all files
+        for (let f of fileset)
+        {
+            // Read the entire file
+            let data = fs.readFileSync(f);
+
+            // Append it
+            let uid = await imap.append(data, append_options);
+
+            console.log(`${uid} ${f}`)
+        }
+
+    }));
 
 program.parse();
 
 (async function ()
 {
-    let account = accounts[program.opts().account];
+    // Read the config file
+    let configFile = JSON.parse(fs.readFileSync(program.opts().config, 'utf8'));
+
+    // Work out which account to use
+    let accountName = program.opts().account;
+    let account;
+    if (!accountName)
+    {
+        defAccount = Object.entries(configFile.accounts).filter(x => x[1].default);
+        if (defAccount.length == 1)
+            account = defAccount[0][1];
+        else
+            throw new Error("No default account");
+    }
+    else
+        account = configFile.accounts[accountName];
+
     //console.log(`account: ${account.user} on ${account.host}`);
 
     // Config
     let config = {};
-    if (program.opts().debug)
+    if (program.opts().debug || configFile.debug)
         config.debug = console.log;
 
     // Create IMAP object
