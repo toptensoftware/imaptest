@@ -11,7 +11,10 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}\\imap_test.js"
+            "args": [
+                "export", "332"
+            ],
+            "program": "${workspaceFolder}\\test.js"
         },
         {            
             "type": "pwa-node",            

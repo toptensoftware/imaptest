@@ -1,6 +1,96 @@
 const { Timestamp, TopologyDescriptionChangedEvent } = require('mongodb');
 const Imap = require('node-imap');
 
+let originalSearch = Imap.prototype._search;
+let originalESearch = Imap.prototype._esearch;
+let originalThread = Imap.prototype._thread;
+Imap.prototype._search = function(which, criteria, cb) {
+
+    if (typeof(criteria) !== 'string')
+    {
+        return originalSearch.apply(this, arguments);
+    }
+
+    if (this._box === undefined)
+      throw new Error('No mailbox is currently selected')
+    let cmd = which + 'SEARCH', info = { hasUTF8: false /*output*/ }, query = ' ' + criteria
+    let lines
+    if (info.hasUTF8) {
+      cmd += ' CHARSET UTF-8'
+      lines = query.split(CRLF)
+      query = lines.shift()
+    }
+    cmd += query
+    this._enqueue(cmd, cb)
+    if (info.hasUTF8) {
+      const req = this._queue[this._queue.length - 1]
+      req.lines = lines
+    }
+}
+
+
+Imap.prototype._esearch = function(which, criteria, options, cb) 
+{
+    if (typeof(criteria) !== 'string')
+    {
+        return originalESearch.apply(this, arguments);
+    }
+
+
+    if (this._box === undefined)
+      throw new Error('No mailbox is currently selected')
+    const info = { hasUTF8: false /*output*/ }
+    let query = " " + criteria
+    let charset = ''
+    let lines
+    if (info.hasUTF8) {
+      charset = ' CHARSET UTF-8'
+      lines = query.split(CRLF)
+      query = lines.shift()
+    }
+    if (typeof options === 'function') {
+      cb = options
+      options = ''
+    }
+    else if (!options)
+      options = ''
+    if (Array.isArray(options))
+      options = options.join(' ')
+    this._enqueue(which + 'SEARCH RETURN (' + options + ')' + charset + query, cb)
+    if (info.hasUTF8) {
+      const req = this._queue[this._queue.length - 1]
+      req.lines = lines
+    }
+  }
+
+Imap.prototype._thread = function(which, algorithm, criteria, cb) {
+
+    if (typeof(criteria) !== 'string')
+    {
+        return originalESearch.apply(this, arguments);
+    }
+
+    algorithm = algorithm.toUpperCase()
+    if (!this.serverSupports('THREAD=' + algorithm))
+      throw new Error('Server does not support that threading algorithm')
+    const info = { hasUTF8: false /*output*/ }
+    let query = " " + criteria
+    let charset = 'US-ASCII'
+    let lines
+    if (info.hasUTF8) {
+      charset = 'UTF-8'
+      lines = query.split(CRLF)
+      query = lines.shift()
+    }
+    this._enqueue(which + 'THREAD ' + algorithm + ' ' + charset + query, cb)
+    if (info.hasUTF8) {
+      const req = this._queue[this._queue.length - 1]
+      req.lines = lines
+    }
+}
+
+
+
 function promise(_this, fn, args)
 {
     return new Promise((resolve, reject) => {
@@ -86,7 +176,9 @@ class ImapPromiseBase
 
             // Resolve/reject
             fetch.once('error', (err) => reject(err));
-            fetch.once('end', () => resolve(result));
+            fetch.once('end', () => {
+                resolve(result)
+            });
         });
     }
 }
@@ -162,6 +254,7 @@ class ImapPromise extends ImapPromiseBase
 
     getBoxes()  { return promise(this.imap, this.imap.getBoxes, arguments) }
     openBox()   { return promise(this.imap, this.imap.openBox, arguments); }
+    status()    { return promise(this.imap, this.imap.status, arguments); }
     addBox()    { return promise(this.imap, this.imap.addBox, arguments); }
     delBox()    { return promise(this.imap, this.imap.delBox, arguments); }
     renameBox() { return promise(this.imap, this.imap.renameBox, arguments); }
