@@ -6,6 +6,7 @@ const glob = require('glob');
 const { program } = require('commander');
 
 const Imap = require('./imap_promise');
+const { promptSimShell } = require('readline-sync');
 
 let _action;
 
@@ -14,12 +15,18 @@ function register(action) { _action = action }
 program
     .option('-c, --config', "config file", "imaptool.config.json")
     .option('-a, --account <account>', 'the account to use')
+    .option('--user <username>', "account user name")
+    .option('--pass <password>', "account password")
+    .option('--host <hostname>', "IMAP host name")
+    .option('--port <port>', "IMAP port")
+    .option('--tls', "Enable TLS")
+    .option('--disable-tls', "Disable TLS")
     .option('-d, --debug', 'display IMAP log', false);
 
 program.command('caps')
     .description("Show server capabilities")
     .action((options) => register(async (imap) => {
-        console.log(imap.imap._caps.join("\n"));
+        console.log(imap.imap._caps.join(" "));
     }));
 
 program.command('boxes')
@@ -341,28 +348,56 @@ program.parse();
 
 (async function ()
 {
-    // Read the config file
-    let configFile = JSON.parse(fs.readFileSync(program.opts().config, 'utf8'));
+    let account = {};
+    let configFile = {};
 
-    // Work out which account to use
-    let accountName = program.opts().account;
-    let account;
-    if (!accountName)
+    try
     {
-        defAccount = Object.entries(configFile.accounts).filter(x => x[1].default);
-        if (defAccount.length == 1)
-            account = defAccount[0][1];
-        else
-            throw new Error("No default account");
+        // Read the config file
+        configFile = JSON.parse(fs.readFileSync(program.opts().config, 'utf8'));
+        
+        // Work out which account to use
+        let accountName = program.opts().account;
+        if (accountName != 'none')
+        {
+            if (!accountName)
+            {
+                defAccount = Object.entries(configFile.accounts).filter(x => x[1].default);
+                if (defAccount.length == 1)
+                    account = defAccount[0][1];
+                else
+                    account = {}
+            }
+            else
+                account = configFile.accounts[accountName];
+        }
     }
-    else
-        account = configFile.accounts[accountName];
+    catch (err)  { /* dont care */}
 
-    //console.log(`account: ${account.user} on ${account.host}`);
+    // Merge command line account options
+    let popts= program.opts();
+    if (popts.user)
+        account.user = popts.user;
+    if (popts.pass)
+        account.password = popts.pass;
+    if (popts.host)
+        account.host = popts.host;
+    if (popts.port)
+        account.port = parseInt(popts.port);
+    if (popts.tls)
+        account.tls = true;
+    else if (popts.disableTls)
+        account.tls = false;
+
+    // TLS and port defaults
+    if (!account.hasOwnProperty('tls') && account.hasOwnProperty('port'))
+        account.tls = parseInt(account.port) == 993;
+    if (!account.hasOwnProperty('port'))
+        account.port = account.tls ? 993 : 143;
 
     // Config
     let config = {};
-    if (program.opts().debug || configFile.debug)
+    if (popts.debug || configFile.debug)
         config.debug = console.log;
 
     // Create IMAP object

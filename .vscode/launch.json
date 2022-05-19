@@ -12,7 +12,7 @@
                 "<node_internals>/**"
             ],
             "args": [
-                "search", "ALL"
+                "-a","none","--disable-tls","caps"
             ],
             "program": "${workspaceFolder}\\imaptool.js"
         },
