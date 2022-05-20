@@ -1,5 +1,6 @@
 const inspect = require('util').inspect;
 const fs = require('fs');
+const readline = require('readline-sync');
 
 const program = require('commander').program;
 
@@ -19,8 +20,10 @@ program
 
 program.command('sync')
     .description("Sync db with imap")
+    .option('--verbose', "Display changes")
     .action((options) => register(async (account) => {
-        account.sync_notify = new SyncNotify();
+        if (options.verbose)
+            account.sync_notify = new SyncNotify();
         await account.sync();
     }));
 
@@ -52,7 +55,7 @@ program.command('listbox')
         }
     
         // Get all messages for the mailbox
-        let mcoll = Database.db.collection(account.messages_collection_name);
+        let mcoll = Database.db.collection(account.collection_name("messages"));
         let mids = [];
         await mcoll.find(
             { mailbox: mailbox },
@@ -70,7 +73,7 @@ program.command('listbox')
 
         // Count how many actual messages 
         let count = 0;
-        convs.forEach(x => count += x.size);
+        convs.forEach(x => count += x.message_ids.length);
         console.log(`Grouped ${count} messages into ${convs.length} conversations in ${convedAt - fetchedAt} ms. (fetch took ${fetchedAt - start} ms)`);
     }));
 
@@ -138,7 +141,7 @@ class SyncNotify
     }
     sync_start()                { console.log("Sync Starting...") };
     sync_finish()               { console.log("Sync Finished."); this.write_summary(); };
-    message_added(mid)          { console.log(" - added:          ", mid); this.added_messages++ };
+    message_added(msg)          { console.log(" - added:          ", msg.message_id); this.added_messages++ };
     message_deleted(mid)        { console.log(" - deleted:        ", mid); this.deleted_messages++ };
     message_flagged(mid)        { console.log(" - flagged:        ", mid); this.flagged_messages++ };
     mailbox_added(mailbox)      { console.log(" - mailbox added:  ", mailbox) };

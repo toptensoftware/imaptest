@@ -12,7 +12,7 @@
                 "<node_internals>/**"
             ],
             "args": [
-                "listbox", "INBOX", "--count"
+                "listbox", "INBOX"
 
             ],
             "program": "${workspaceFolder}\\convtool.js"

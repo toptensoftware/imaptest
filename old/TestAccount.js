@@ -106,7 +106,7 @@ ${body}
         assert.equal(db_mailbox.highestmodseq, imap_mailbox.highestmodseq);
 
         // Get db messages
-        let db_messages = await data.db.collection(this.sync_user.messages_collection_name).find({
+        let db_messages = await data.db.collection(this.sync_user.collection_name("messages")).find({
             mailbox: mailbox, 
         }).sort({ uid: 1}).toArray();
 
