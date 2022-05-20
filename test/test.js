@@ -1,66 +1,147 @@
 const assert = require('assert');
+const { db } = require('../lib/Database');
 
-const data = require('../data');
-const TestAccount = require('./TestAccount');
+const GroupBuilder = require('../lib/GroupBuilder');
 
-before(async function () {
-    console.log("Opening database...");
-    await data.open("mongodb://localhost:44017/?directConnection=true", "imapsync");
-});
-
-after(async function () {
-    await data.close();
-    console.log("Database closed.");
-});
-
-describe('IMap Sync', function () {
+describe('GroupBuilder', function () {
   
-    it('canConnect()', async function () {
+    it('can be empty', function () {
 
-        let acc = new TestAccount();
-        await acc.connect();
-        await acc.disconnect();
+        let gb = new GroupBuilder();
+        assert.equal(gb.groups.size, 0);
+        assert.equal(gb.groupsById.size, 0);
 
     });
 
-    it('canAppendMessage', async function () {
+    it('can have single item', function () { 
 
-        let acc = new TestAccount();
-        await acc.connect();
-        await acc.createMessageQuick();
-        await acc.disconnect();
+        let gb = new GroupBuilder();
+        gb.add("A", []);
+
+        assert.equal(gb.groups.size, 1);
+        assert.equal(gb.groupsById.size, 1);
+        assert.equal(gb.groupsById.get("A").size, 1);
+        assert.deepEqual([...gb.groupsById.get("A")], ["A"]);
+
     });
 
-    it('canSyncMessages', async function () {
+    it('can have ungrouped items', function () { 
 
-        let acc = new TestAccount();
-        await acc.connect();
-        await acc.createMessageQuick();
-        await acc.createMessageQuick();
-        await acc.createMessageQuick();
-        await acc.sync();
-        await acc.checkIntegrity("INBOX");
-        await acc.disconnect();
+        let gb = new GroupBuilder();
+        gb.add("A", []);
+        gb.add("B", []);
+
+        assert.equal(gb.groups.size, 2);
+        assert.equal(gb.groupsById.size, 2);
+        assert.deepEqual([...gb.groupsById.get("A")], ["A"]);
+        assert.deepEqual([...gb.groupsById.get("B")], ["B"]);
     });
 
-    it('canResyncMessages', async function () {
+    it('can have grouped items', function () { 
 
-        let acc = new TestAccount();
-        await acc.connect();
-        
-        await acc.createMessageQuick();
-        await acc.createMessageQuick();
-        await acc.createMessageQuick();
-        await acc.sync();
-        await acc.checkIntegrity("INBOX");
+        let gb = new GroupBuilder();
+        gb.add("A", []);
+        gb.add("B", [ "A" ]);
 
-        await acc.createMessageQuick();
-        await acc.createMessageQuick();
-        await acc.createMessageQuick();
-        await acc.sync();
-        await acc.checkIntegrity("INBOX");
-
-        await acc.disconnect();
+        assert.equal(gb.groups.size, 1);
+        assert.equal(gb.groupsById.size, 2);
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("B"));
+        assert(gb.groups.has(gb.groupsById.get("A")));
     });
 
+    it('can have circular references', function () { 
+
+        let gb = new GroupBuilder();
+        gb.add("A", [ "B" ]);
+        gb.add("B", [ "A" ]);
+
+        assert.equal(gb.groups.size, 1);
+        assert.equal(gb.groupsById.size, 2);
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("B"));
+        assert(gb.groups.has(gb.groupsById.get("A")));
+    });
+
+    it('can have multiple references', function () { 
+
+        let gb = new GroupBuilder();
+        gb.add("A", [ "B", "C", "D" ]);
+
+        assert.equal(gb.groups.size, 1);
+        assert.equal(gb.groupsById.size, 4);
+        assert.deepEqual([...gb.groupsById.get("A")], ["A", "B", "C", "D"]);
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("B"));
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("C"));
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("D"));
+        assert(gb.groups.has(gb.groupsById.get("A")));
+    });
+
+    it('can have link to existing gtoup', function () { 
+
+        let gb = new GroupBuilder();
+        gb.add("A", [ "B", "C", "D" ]);
+        gb.add("E", [ "D" ])
+
+        assert.equal(gb.groups.size, 1);
+        assert.equal(gb.groupsById.size, 5);
+        assert.deepEqual([...gb.groupsById.get("A")], ["E", "A", "B", "C", "D"]);
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("B"));
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("C"));
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("D"));
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("E"));
+        assert(gb.groups.has(gb.groupsById.get("A")));
+    });
+
+    it('can have link from existing group', function () { 
+
+        let gb = new GroupBuilder();
+        gb.add("A", [ "B", "C", "D" ]);
+        gb.add("D", [ "E" ])
+
+        assert.equal(gb.groups.size, 1);
+        assert.equal(gb.groupsById.size, 5);
+        assert.deepEqual([...gb.groupsById.get("A")], ["A", "B", "C", "D", "E"]);
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("B"));
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("C"));
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("D"));
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("E"));
+        assert(gb.groups.has(gb.groupsById.get("A")));
+    });
+
+    it('can combine groups via references', function () { 
+
+        let gb = new GroupBuilder();
+        gb.add("A", [ "B", "C", "D" ]);
+        gb.add("E", [ "F", "G", "H" ]);
+        gb.add("D", ["H"])
+
+        assert.equal(gb.groups.size, 1);
+        assert.equal(gb.groupsById.size, 8);
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("B"));
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("C"));
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("D"));
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("E"));
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("F"));
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("G"));
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("H"));
+        assert(gb.groups.has(gb.groupsById.get("A")));
+    });
+
+    it('can combine groups via initial id', function () { 
+
+        let gb = new GroupBuilder();
+        gb.add("A", [ "B", "C", "D" ]);
+        gb.add("E", [ "F", "G", "H" ]);
+        gb.add("A", ["E"])
+
+        assert.equal(gb.groups.size, 1);
+        assert.equal(gb.groupsById.size, 8);
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("B"));
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("C"));
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("D"));
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("E"));
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("F"));
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("G"));
+        assert.equal(gb.groupsById.get("A"), gb.groupsById.get("H"));
+        assert(gb.groups.has(gb.groupsById.get("A")));
+    });
 });

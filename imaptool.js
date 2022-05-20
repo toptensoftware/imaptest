@@ -5,8 +5,7 @@ const glob = require('glob');
 
 const { program } = require('commander');
 
-const Imap = require('./imap_promise');
-const { promptSimShell } = require('readline-sync');
+const Imap = require('./lib/ImapPromise');
 
 let _action;
 

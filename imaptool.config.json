@@ -7,7 +7,9 @@
             "password": "rafiki23",
             "host": "mxdev.toptensoftware.com",
             "port": 993,
-            "tls": true
+            "tls": true,
+            "dbserver": "mongodb://localhost:44017/?directConnection=true",
+            "dbname": "mxdev"
         },
 
         "tts": {
@@ -15,7 +17,9 @@
             "password": "ormapkrcwiipjwik-1U",
             "host": "mx2.toptensoftware.com",
             "port": 993,
-            "tls": true
+            "tls": true,
+            "dbserver": "mongodb://localhost:44017/?directConnection=true",
+            "dbname": "mx2"
         }
     }
 }

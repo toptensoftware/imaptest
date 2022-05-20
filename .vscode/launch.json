@@ -12,9 +12,10 @@
                 "<node_internals>/**"
             ],
             "args": [
-                "-a","none","--disable-tls","caps"
+                "listbox", "INBOX", "--count"
+
             ],
-            "program": "${workspaceFolder}\\imaptool.js"
+            "program": "${workspaceFolder}\\convtool.js"
         },
         {            
             "type": "pwa-node",            
