@@ -7,7 +7,6 @@ const program = require('commander').program;
 const Imap = require('./lib/ImapPromise');
 const Database = require('./lib/Database');
 const Account = require('./lib/Account');
-const ConversationCache = require('./lib/ConversationCache');
 
 let _action;
 
@@ -18,11 +17,71 @@ program
     .option('-a, --account <account>', 'the account to use')
     .option('-d, --debug', 'display IMAP log', false);
 
-    program.command('sync')
+program.command('sync')
     .description("Sync db with imap")
     .option('--verbose', "Display changes")
     .action((options) => register(async (account) => {
         await account.sync();
+    }));
+
+program.command('snapshot')
+    .description("Save or restore db snapshots")
+    .argument("<name>", "The name of the snapshot")
+    .option("--restore", "Restore a snapshot")
+    .option("--save", "Save asnap shot")
+    .option("--delete", "Save asnap shot")
+    .action((name, options) => register(async (account) => {
+
+        let srcSuffix;
+        let dstSuffix;
+        let delSuffix;
+        if (options.save)
+        {
+            srcSuffix = "";
+            delSuffix = dstSuffix = ` (${name})`;
+        }
+        else if (options.restore)
+        {
+            delSuffix = dstSuffix = "";
+            srcSuffix = ` (${name})`;
+        }
+        else if (options.delete)
+        {
+            delSuffix = ` (${name})`;
+        }
+        else
+        {
+            throw new Error("Please specify --save or --restore")
+        }
+
+        for (let coll of ["mailboxes", "messages", "conversations"])
+        {
+            let collname = account.collection_name(coll);
+            if (delSuffix)
+            {
+                try
+                {
+                    await Database.db.collection(collname + delSuffix).drop();
+                }
+                catch (err) { /* don't care */ }
+            }
+            if (srcSuffix !== undefined && dstSuffix !== undefined)
+                await copyCollection(collname + srcSuffix, collname + dstSuffix);
+        }
+
+        async function copyCollection(from, to) {
+            await Database.db.collection(from).aggregate([ { $out: to } ]).forEach(x=>{});
+        }
+
+
+    }));
+
+
+
+program.command('trim')
+    .description("Trim DB of invalid conversations")
+    .action((options) => register(async (account) => {
+        await account.trimConversations();
     }));
 
 program.command('status')
@@ -54,13 +113,11 @@ program.command('drop')
             await account.dropAllConversations();
     }));
 
-    /*
 program.command('list')
     .description("List conversations for messages")
     .argument('<mids...>', "The message ids to show conversations for")
     .action((mids, options) => register(async (account) => {
-        let cache = new ConversationCache(account);
-        let convs = await cache.getConversations(mids)
+        let convs = await account.getConversations(mids)
         console.log(inspect(convs));
     }));
 
@@ -92,8 +149,7 @@ program.command('listbox')
         let fetchedAt = Date.now();
 
         // Build conversations
-        let cache = new ConversationCache(account);
-        let convs = await cache.getConversations(mids)
+        let convs = await account.getConversations(mids);
         let convedAt = Date.now();
 
         // Show result
@@ -104,7 +160,6 @@ program.command('listbox')
         convs.forEach(x => count += x.message_ids.length);
         console.log(`Grouped ${count} messages into ${convs.length} conversations in ${convedAt - fetchedAt} ms. (fetch took ${fetchedAt - start} ms)`);
     }));
-    */
 
 program.parse();
 
