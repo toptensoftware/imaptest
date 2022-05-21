@@ -18,15 +18,43 @@ program
     .option('-a, --account <account>', 'the account to use')
     .option('-d, --debug', 'display IMAP log', false);
 
-program.command('sync')
+    program.command('sync')
     .description("Sync db with imap")
     .option('--verbose', "Display changes")
     .action((options) => register(async (account) => {
-        if (options.verbose)
-            account.sync_notify = new SyncNotify();
         await account.sync();
     }));
 
+program.command('status')
+    .description("Display status of local cache")
+    .option("--mailboxes", "Show status of mailboxes")
+    .option("--messages", "Show status of messages")
+    .action((options) => register(async (account) => {
+        if (options.messages)
+        {
+            console.log(JSON.stringify(await account.status_messages(), null, 4));
+        }
+        else if (options.mailboxes)
+        {
+            console.log(JSON.stringify(await account.status_mailboxes(), null, 4));
+        }
+        else
+        {
+            console.log(JSON.stringify(await account.status(), null, 4));
+        }
+    }));
+
+program.command('drop')
+    .description("Drop all conversations")
+    .option("--all", "Drop entire message cache and all conversations")
+    .action((options) => register(async (account) => {
+        if (options.all)
+            await account.dropEverything();
+        else
+            await account.dropAllConversations();
+    }));
+
+    /*
 program.command('list')
     .description("List conversations for messages")
     .argument('<mids...>', "The message ids to show conversations for")
@@ -76,6 +104,7 @@ program.command('listbox')
         convs.forEach(x => count += x.message_ids.length);
         console.log(`Grouped ${count} messages into ${convs.length} conversations in ${convedAt - fetchedAt} ms. (fetch took ${fetchedAt - start} ms)`);
     }));
+    */
 
 program.parse();
 
@@ -116,9 +145,9 @@ program.parse();
     // Invoke command
     try
     {
-
+        let start = Date.now();
         await _action(account)
-
+        console.error(`Completed in ${Date.now() - start} ms`);
     }
     catch (err)
     {
@@ -131,26 +160,3 @@ program.parse();
 })();
 
 
-class SyncNotify
-{
-    constructor()
-    {
-        this.added_messages = 0;
-        this.deleted_messages = 0;
-        this.flagged_messages = 0;
-    }
-    sync_start()                { console.log("Sync Starting...") };
-    sync_finish()               { console.log("Sync Finished."); this.write_summary(); };
-    message_added(msg)          { console.log(" - added:          ", msg.message_id); this.added_messages++ };
-    message_deleted(mid)        { console.log(" - deleted:        ", mid); this.deleted_messages++ };
-    message_flagged(mid)        { console.log(" - flagged:        ", mid); this.flagged_messages++ };
-    mailbox_added(mailbox)      { console.log(" - mailbox added:  ", mailbox) };
-    mailbox_deleted(mailbox)    { console.log(" - mailbox deleted:", mailbox) };
-
-    write_summary()
-    {
-        console.log("Added messages: ", this.added_messages);
-        console.log("Deleted messages: ", this.deleted_messages);
-        console.log("Flagged messages: ", this.flagged_messages);
-    }
-}

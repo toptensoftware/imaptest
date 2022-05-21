@@ -12,8 +12,7 @@
                 "<node_internals>/**"
             ],
             "args": [
-                "sync"
-
+                "status", "--mailboxes"
             ],
             "program": "${workspaceFolder}\\convtool.js"
         },
