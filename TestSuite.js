@@ -24,6 +24,7 @@ class TestSuite
     {
         this._mbMap = new Map();
         this._message_date = Date.now();
+        this.qdepth = 0;
     }
     async run(callback)
     {
@@ -112,7 +113,7 @@ class TestSuite
             "From": "sender@box.com",
             "To": "receiver@box.com",
             "Subject": `Message #${id}`,
-            "Date": Utils.format_email_date(new Date(this._message_date)),
+            "Date": Utils.format_email_date(new Date(this._message_date + id * 5000)),
             "Message-ID": `<${this.make_message_id(id)}>`,
         }
         if (refs)
@@ -136,8 +137,6 @@ class TestSuite
         });
 
         this.getMidMap(mailbox).set(id, uid);
-
-        this._message_date += 1000;
 
         return uid;
     }
@@ -210,6 +209,29 @@ class TestSuite
         console.log(`Mailbox '${mailbox}' passed integrity check.`);
     }
 
+    quiet(q)
+    {
+        if (q)
+        {
+            this.qdepth++;
+            if (this.qdepth == 1)
+            {
+                this.save_output = this.account.info;
+                this.account.info = null;
+            }
+        }
+        else
+        {
+            this.qdepth--;
+            if (this.quite == 0)
+            {
+                this.account.info = this.save_output;
+                delete this.save_output;
+            }
+        }
+
+    }
+
     async sync()
     {
         await this.account.sync();
@@ -259,7 +281,9 @@ class TestSuite
         for (let i=0; i<conv.message_ids.length; i++)
         {
             // Delete conversations to force rebuild
+            this.quiet(true);
             await this.account.dropAllConversations();
+            this.quiet(false);
 
             // Build from this message
             let altConv = (await this.account.getConversations(conv.message_ids[0]))[0];
