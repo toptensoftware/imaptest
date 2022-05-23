@@ -2,14 +2,14 @@
     "accounts": 
     {
         "rs": {
-            "default": true,
             "user": "brad@rocketskeleton.com",
             "password": "rafiki23",
             "host": "mxdev.toptensoftware.com",
             "port": 993,
             "tls": true,
-            "dbserver": "mongodb://localhost:44017/?directConnection=true",
-            "dbname": "mxdev"
+            "db_server": "mongodb://localhost:44017/?directConnection=true",
+            "db_name": "mxdev",
+            "db_base_collection_name": "mxdev"
         },
 
         "tts": {
@@ -18,8 +18,21 @@
             "host": "mx2.toptensoftware.com",
             "port": 993,
             "tls": true,
-            "dbserver": "mongodb://localhost:44017/?directConnection=true",
-            "dbname": "mx2"
+            "db_server": "mongodb://localhost:44017/?directConnection=true",
+            "db_name": "mx2",
+            "db_base_collection_name": "mx2"
+        },
+
+        "testsuite": {
+            "default": true,
+            "user": "testSuite",
+            "password": "pass",
+            "host": "localhost",
+            "port": 44143,
+            "tls": false,
+            "db_server": "mongodb://localhost:44017/?directConnection=true", 
+            "db_name": "testsuite",
+            "db_base_collection_name": "testsuite"
         }
     }
 }

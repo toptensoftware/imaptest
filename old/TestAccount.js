@@ -1,8 +1,7 @@
-const Imap = require('../imap_promise');
-const data = require('../data');
-const utils = require('../utils');
-const User = require('../User');
-const assert = require('assert');
+const Imap = require('../lib/ImapPromise');
+const Database = require('../lib/Database');
+const Utils = require('../lib/Utils');
+const Account = require('../lib/Account');
 
 class TestAccount
 {
@@ -14,15 +13,14 @@ class TestAccount
             password: 'pass',
             host: 'localhost',
             port: 44143,
-            tls: false,
-            //debug: console.log
+            tls: false
         }
 
         // Create Imap connection
         this.imap = new Imap(this.config);
 
         // Create User object
-        this.sync_user = new User(this.config);
+        this.account = new Account(this.config);
 
         this.nextMessageIndex = 0;
     }
@@ -42,42 +40,44 @@ class TestAccount
         return this.imap.end();
     }
 
-    createMessage(from, to, subject, body, mailbox)
+    createMessage(mailbox, id, refs)
     {
+        // Work out headers
+        let headers = {
+            "MIME-Version": "1.0",
+            "From": "sender@box.com",
+            "To": "receiver@box.com",
+            "Subject": `Message #${id}`,
+            "Date": utils.format_email_date(new Date()),
+            "Message-ID": `<msg_${id}@box.com>`,
+        }
+        if (refs)
+        {
+            headers["References"] = refs.map(x => `<msg_${x}@box.com>`).join(',');
+        }
 
-        let message = 
-`MIME-Version: 1.0
-From: ${from}
-To: ${to}
-Subject: ${subject}
-Date: ${utils.format_email_date(new Date())}
-Message-ID: <msg_${Date.now()}_${Math.floor(Math.random() * 10000)}@box.com>
+        // Build full message
+        let msg = "";
+        for (let [k,v] of headers)
+        {
+            msg += `${k}: ${v}\n`;
+        }
 
-${body}
-`;
+        // Create message body (which includes a copy of the headers for easy checking)
+        msg += `\nMessage #${id}\n\n` + msg;
         
-        return this.imap.append(message, { 
-            mailbox: mailbox ?? "INBOX"
+        // Save the message
+        return this.imap.append(msg, { 
+            mailbox: mailbox
         });
-    }
-
-    createMessageQuick()
-    {
-        this.nextMessageIndex++;
-        return this.createMessage(
-                "sender@domain.com", 
-                "receiver@domain.com", 
-                `Message #${this.nextMessageIndex++}`,
-                `This is the body of message #${this.nextMessageIndex++}`
-                )
     }
 
     async sync()
     {
-        await this.sync_user.load();
-        await this.sync_user.open();
-        await this.sync_user.sync();
-        await this.sync_user.close();
+        await this.account.load();
+        await this.account.open();
+        await this.account.sync();
+        await this.account.close();
     }
 
     async checkIntegrity()
@@ -106,7 +106,7 @@ ${body}
         assert.equal(db_mailbox.highestmodseq, imap_mailbox.highestmodseq);
 
         // Get db messages
-        let db_messages = await data.db.collection(this.sync_user.collection_name("messages")).find({
+        let db_messages = await data.db.collection(this.account.collection_name("messages")).find({
             mailbox: mailbox, 
         }).sort({ uid: 1}).toArray();
 
@@ -127,10 +127,9 @@ ${body}
 
             assert.equal(imap_message.attributes.uid, db_message.uid);
             
-            assert.equal(utils.clean_message_id(imap_message.headers), db_message.message_id);
-            assert.deepEqual(utils.clean_references(imap_message.headers), db_message.references);
-            assert.equal(imap_message.attributes.flags.indexOf('\\Seen') < 0, !!db_message.unread);
-            assert.equal(imap_message.attributes.flags.indexOf('\\Flagged') >= 0, !!db_message.important);
+            assert.equal(Utils.clean_message_id(imap_message.headers), db_message.message_id);
+            assert.deepEqual(Utils.clean_references(imap_message.headers), db_message.references);
+            assert.equal(Utils.message_flags_mask(imap_message.attributes), db_message.flags);
         }
     }
 

@@ -18,6 +18,15 @@
             ],
             "program": "${workspaceFolder}\\convtool.js"
         },
+        {
+            "type": "pwa-node",
+            "request": "launch",
+            "name": "Test Suite",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}\\TestConversations.js"
+        },
         {            
             "type": "pwa-node",            
             "request": "launch",            
@@ -25,7 +34,7 @@
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",            
             "args": [           
                "--no-timeouts",     
-               "${workspaceRoot}/test/*.js"            
+               "${workspaceRoot}/test/messageSync.js"            
             ],            
             "cwd": "${workspaceRoot}",   
             "internalConsoleOptions": "openOnSessionStart"        

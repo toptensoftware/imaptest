@@ -4,8 +4,8 @@ const Utils = require('./lib/Utils');
 (async function(){
 
     await Database.open({
-        dbserver: "mongodb://localhost:44017/?directConnection=true", 
-        dbname: "sandbox"
+        db_server: "mongodb://localhost:44017/?directConnection=true", 
+        db_name: "sandbox"
     });
 
     let coll = Database.db.collection("test");

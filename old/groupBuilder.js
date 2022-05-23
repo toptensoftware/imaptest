@@ -1,5 +1,4 @@
 const assert = require('assert');
-const { db } = require('../lib/Database');
 
 const GroupBuilder = require('../lib/GroupBuilder');
 
