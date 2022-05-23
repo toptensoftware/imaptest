@@ -16,7 +16,7 @@
                 //"snapshot", "--restore", "1"
                 "trim"
             ],
-            "program": "${workspaceFolder}\\convtool.js"
+            "program": "${workspaceFolder}\\sandbox.js"
         },
         {
             "type": "pwa-node",
@@ -25,7 +25,7 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}\\sandbox.js"
+            "program": "${workspaceFolder}\\TestConversations.js"
         },
         {            
             "type": "pwa-node",            
