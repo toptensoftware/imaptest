@@ -25,7 +25,8 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}\\TestConversations.js"
+            //"program": "${workspaceFolder}\\TestConversations.js"
+            "program": "${workspaceFolder}\\TestMailboxView.js"
         },
         {            
             "type": "pwa-node",            

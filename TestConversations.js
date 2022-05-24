@@ -109,6 +109,19 @@ new TestSuite().run(async (ts) => {
     await ts.sync();
     await ts.checkConversation(70, 70, [70, 71, 72, 73, 74]);
 
-
+    console.log("\n--- Test message flags");
+    await ts.createMessage("testbox", 80);
+    await ts.createMessage("testbox", 81, [80]);
+    await ts.sync();
+    await ts.checkConversation(80, 80, [80, 81]);
+    await ts.imap.openBox("testbox", false);
+    await ts.imap.addFlags(ts.uidof("testbox", 80), "\\Flagged");
+    await ts.imap.addFlags(ts.uidof("testbox", 81), "\\Seen");
+    await ts.sync();
+    await ts.checkConversation(80, 80, [80, 81]);
+    await ts.imap.delFlags(ts.uidof("testbox", 80), "\\Flagged");
+    await ts.imap.delFlags(ts.uidof("testbox", 81), "\\Seen");
+    await ts.sync();
+    await ts.checkConversation(80, 80, [80, 81]);
 
 });

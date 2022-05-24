@@ -173,7 +173,7 @@ class TestSuite
         });
     
         // Get imap mailbox
-        let imap_mailbox = await this.imap.openBox(mailbox, true);
+        let imap_mailbox = await this.imap.openBox(mailbox, false);
     
         assert.equal(db_mailbox.uidnext, imap_mailbox.uidnext);
         assert.equal(db_mailbox.uidvalidity, imap_mailbox.uidvalidity);
@@ -222,7 +222,7 @@ class TestSuite
         else
         {
             this.qdepth--;
-            if (this.quite == 0)
+            if (this.qdepth == 0)
             {
                 this.account.info = this.save_output;
                 delete this.save_output;
@@ -270,10 +270,10 @@ class TestSuite
 
         // Check flags match
         let flags = 0;
-        this.getCollection("messages").find({
-            message_ids: { $in: conv.message_ids },
-            projection: { flags: 1}
-        }).forEach(x => flags |= x.flags)
+        await this.getCollection("messages").find(
+            { message_id: { $in: conv.message_ids } },
+            { projection: { flags: 1} }
+        ).forEach(x => flags |= x.flags);
         assert.equal(conv.flags, flags);
 
         // Check conv id matches
