@@ -123,5 +123,4 @@ new TestSuite().run(async (ts) => {
     await ts.imap.delFlags(ts.uidof("testbox", 81), "\\Seen");
     await ts.sync();
     await ts.checkConversation(80, 80, [80, 81]);
-
 });
