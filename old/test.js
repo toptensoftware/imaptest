@@ -19,7 +19,6 @@ const data = require('./data');
         debug: console.log
     });
 
-    await user.load();
     await user.open();
     await user.sync();
     await user.close();

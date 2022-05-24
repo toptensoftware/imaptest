@@ -74,7 +74,6 @@ class TestAccount
 
     async sync()
     {
-        await this.account.load();
         await this.account.open();
         await this.account.sync();
         await this.account.close();

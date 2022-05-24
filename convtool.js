@@ -194,7 +194,6 @@ program.parse();
         
     // Create IMAP object
     let account = new Account(config);
-    await account.load();
     await account.open();
 
     // Invoke command

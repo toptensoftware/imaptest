@@ -50,7 +50,6 @@ new TestSuite().run(async (ts) => {
             { name: "testbox" },
             { $set: { uidvalidity: 0 } }
     );
-    await ts.account.load();
     await ts.syncAndCheck();
 
 });

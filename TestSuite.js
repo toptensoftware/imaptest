@@ -80,7 +80,6 @@ class TestSuite
         console.log(`Opening and cleaning DB account`);
         this.account = new Account(config);
         await this.account.open();
-        await this.account.load();
         await this.account.dropEverything();
 
         // Initial empty state sync
@@ -268,6 +267,14 @@ class TestSuite
         let convs = await this.account.getConversations(this.make_message_id(msgid));
         assert(convs.length == 1);
         let conv = convs[0];
+
+        // Check flags match
+        let flags = 0;
+        this.getCollection("messages").find({
+            message_ids: { $in: conv.message_ids },
+            projection: { flags: 1}
+        }).forEach(x => flags |= x.flags)
+        assert.equal(conv.flags, flags);
 
         // Check conv id matches
         assert.equal(conv.conversation_id, this.make_message_id(conv_id))
