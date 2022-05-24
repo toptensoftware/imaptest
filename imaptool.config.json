@@ -2,6 +2,7 @@
     "accounts": 
     {
         "rs": {
+            "default": true,
             "user": "brad@rocketskeleton.com",
             "password": "rafiki23",
             "host": "mxdev.toptensoftware.com",
@@ -24,7 +25,6 @@
         },
 
         "testsuite": {
-            "default": true,
             "user": "testSuite",
             "password": "pass",
             "host": "localhost",

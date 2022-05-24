@@ -78,11 +78,13 @@ program.command('snapshot')
 
 
 
+    /*
 program.command('trim')
     .description("Trim DB of invalid conversations")
     .action((options) => register(async (account) => {
         await account.trimConversations();
     }));
+    */
 
 program.command('status')
     .description("Display status of local cache")
@@ -113,6 +115,7 @@ program.command('drop')
             await account.dropAllConversations();
     }));
 
+    /*
 program.command('list')
     .description("List conversations for messages")
     .argument('<mids...>', "The message ids to show conversations for")
@@ -160,6 +163,7 @@ program.command('listbox')
         convs.forEach(x => count += x.message_ids.length);
         console.log(`Grouped ${count} messages into ${convs.length} conversations in ${convedAt - fetchedAt} ms. (fetch took ${fetchedAt - start} ms)`);
     }));
+    */
 
 program.parse();
 
@@ -188,6 +192,9 @@ program.parse();
     // Config
     if (program.opts().debug)
         config.debug = console.log;
+
+    config.info = console.log;
+
 
     // Connect
     await Database.open(config);

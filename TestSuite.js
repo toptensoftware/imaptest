@@ -260,45 +260,38 @@ class TestSuite
 
     async checkConversation(msgid, conv_id, msg_ids)
     {
-        if (!msg_ids)
-            msg_ids = [];
+        // Get the conversation object
+        let convs = await this.getCollection("conversations").find({
+            conversation_id: this.make_message_id(conv_id),
+        }).toArray();
 
-        // Get the conversation
-        let convs = await this.account.getConversations(this.make_message_id(msgid));
-        assert(convs.length == 1);
+        // The must be exactly one conversation
+        assert.equal(convs.length, 1);
         let conv = convs[0];
-
-        // Check flags match
-        let flags = 0;
-        await this.getCollection("messages").find(
-            { message_id: { $in: conv.message_ids } },
-            { projection: { flags: 1} }
-        ).forEach(x => flags |= x.flags);
-        assert.equal(conv.flags, flags);
-
-        // Check conv id matches
-        assert.equal(conv.conversation_id, this.make_message_id(conv_id))
 
         // Check message ids match
         assert.deepEqual(conv.message_ids, msg_ids.map(x => this.make_message_id(x)));
 
-        // Check fetching the conversation for any message in the conversation
-        // yields the same result
-        delete conv._id;
-        for (let i=0; i<conv.message_ids.length; i++)
-        {
-            // Delete conversations to force rebuild
-            this.quiet(true);
-            await this.account.dropAllConversations();
-            this.quiet(false);
+        // Check messages
+        let flags = 0;
+        await this.getCollection("messages").find(
+            { message_id: { $in: conv.message_ids } }
+        ).forEach(x => {
 
-            // Build from this message
-            let altConv = (await this.account.getConversations(conv.message_ids[0]))[0];
-            delete altConv._id;
+            // Check message has correct conversation id
+            assert.equal(x.conversation_id, this.make_message_id(conv_id));
 
-            // Should be identical
-            assert.deepEqual(conv, altConv);
-        }
+            // Track flags
+            flags |= x.flags
+        });
+        assert.equal(conv.flags, flags);
+
+        // Check there are no messages with this conversation id that aren't in the conversation
+        let bad_messages = await this.getCollection("messages").find({
+            conversation_id: { conv_id },
+            message_id: { $not: { $in: conv.message_ids } } 
+        }).toArray();
+        assert.equal(bad_messages.length, 0);
     }
 }
 
