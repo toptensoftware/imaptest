@@ -1,4 +1,5 @@
 const assert = require('assert');
+const SQL = require('./lib/SQL');
 const TestSuite = require("./TestSuite")
 
 new TestSuite().run(async (ts) => {
@@ -45,11 +46,10 @@ new TestSuite().run(async (ts) => {
     await ts.syncAndCheck();
 
     // Touch the uidvalidity and check the sync refetches the entire mailbox
-    console.log("\n--- Hacking uidvalidity ---")
-    await ts.getCollection("mailboxes").updateOne(
-            { name: "testbox" },
-            { $set: { uidvalidity: 0 } }
-    );
+    console.log("\n--- Hacking uidvalidity ---");
+    let data = JSON.parse(ts.account.db.pluck(new SQL().select("data").from("mailboxes").where({name: "testbox"})));
+    data.uidvalidity = 0;
+    ts.account.db.update("mailboxes", { data: JSON.stringify(data) }, { name: "testbox"});
     await ts.syncAndCheck();
 
 });

@@ -87,11 +87,6 @@ class TestSuite
         await this.imap?.end();
     }
     
-    getCollection(name)
-    {
-        return Database.db.collection(this.account.collection_name(name));
-    }
-    
     make_message_id(id)
     {
         return `msg_${id}@box.com`;
@@ -267,38 +262,35 @@ class TestSuite
 
     async checkConversation(msgid, conv_id, msg_ids)
     {
-        // Get the conversation object
-        let convs = await this.getCollection("conversations").find({
-            conversation_id: this.make_message_id(conv_id),
-        }).toArray();
+        // Get conversations
+        let convs = this.account.db.findMany("conversations", 
+            { conversation_id: this.make_message_id(conv_id) }
+        );
 
         // The must be exactly one conversation
         assert.equal(convs.length, 1);
         let conv = convs[0];
 
+        // Get conversation's messages
+        let conv_mids = this.account.db.findMany("conversation_messages",
+            { conversation_rid: conv.rid}
+        ).map(x => x.message_id);
+
         // Check message ids match
-        assert.deepEqual(conv.message_ids, msg_ids.map(x => this.make_message_id(x)));
+        assert.deepEqual(conv_mids, msg_ids.map(x => this.make_message_id(x)));
 
         // Check messages
         let flags = 0;
-        await this.getCollection("messages").find(
-            { message_id: { $in: conv.message_ids } }
-        ).forEach(x => {
-
-            // Check message has correct conversation id
-            assert.equal(x.conversation_id, this.make_message_id(conv_id));
-
-            // Track flags
-            flags |= x.flags
-        });
+        for (let f of this.account.db.iterate(new SQL()
+            .select("flags")
+            .from("messages")
+            .where({ message_id: { $in: conv_mids } } )
+            ))
+        {
+            flags |= f.flags;
+        }
+            
         assert.equal(conv.flags, flags);
-
-        // Check there are no messages with this conversation id that aren't in the conversation
-        let bad_messages = await this.getCollection("messages").find({
-            conversation_id: { conv_id },
-            message_id: { $not: { $in: conv.message_ids } } 
-        }).toArray();
-        assert.equal(bad_messages.length, 0);
     }
 }
 
