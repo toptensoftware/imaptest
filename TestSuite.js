@@ -1,9 +1,9 @@
 const assert = require('assert');
 
-const Database = require('./lib/Database');
 const Utils = require('./lib/Utils');
 const Imap = require('./lib/IMapPromise');
 const Account = require('./lib/Account');
+const SQL = require('./lib/SQL');
 
 let config = {
     user: 'testSuite',
@@ -11,9 +11,8 @@ let config = {
     host: 'localhost',
     port: 44143,
     tls: false,
-    db_server: "mongodb://localhost:44017/?directConnection=true", 
+    data_dir: "./data",
     db_name: "testsuite",
-    db_base_collection_name: "testsuite",
     info: console.log,
     //debug: console.log
 };
@@ -47,11 +46,7 @@ class TestSuite
     }
 
     async init()
-    {
-        // Open database
-        console.log("Opening database");
-        await Database.open(config);
-        
+    {        
         // Open IMAP
         console.log("Connecting IMAP")
         this.imap = new Imap(Object.assign({}, config, {
@@ -90,7 +85,6 @@ class TestSuite
     {
         await this.account?.close();
         await this.imap?.end();
-        await Database.close();
     }
     
     getCollection(name)
@@ -167,10 +161,10 @@ class TestSuite
     
     async checkMailboxIntegrity(mailbox)
     {
-        // Get db mailbox
-        let db_mailbox = await this.getCollection("mailboxes").findOne({
-            name: mailbox
-        });
+        let db = this.account.db;
+
+        // Get DB mailbox
+        let db_mailbox = JSON.parse(db.findOne("mailboxes", { name: mailbox}).data);
     
         // Get imap mailbox
         let imap_mailbox = await this.imap.openBox(mailbox, false);
@@ -180,9 +174,12 @@ class TestSuite
         assert.equal(db_mailbox.highestmodseq, imap_mailbox.highestmodseq);
     
         // Get db messages
-        let db_messages = await this.getCollection("messages").find({
-            mailbox: mailbox, 
-        }).sort({ uid: 1}).toArray();
+        let db_messages = db.all(new SQL()
+            .select()
+            .from("messages")
+            .where({ mailbox: mailbox, state: {$ne: -1} })
+            .orderBy("uid")
+        );
     
         // Get imap messages
         let imap_messages = await this.imap.fetchHeaders("1:*", 
@@ -198,12 +195,22 @@ class TestSuite
         {
             let imap_message = imap_messages[i];
             let db_message = db_messages[i];
-    
+
             assert.equal(imap_message.attributes.uid, db_message.uid);
             
             assert.equal(Utils.clean_message_id(imap_message.headers), db_message.message_id);
-            assert.deepEqual(Utils.clean_references(imap_message.headers), db_message.references);
             assert.equal(Utils.message_flags_mask(imap_message.attributes.flags), db_message.flags);
+            
+            // Check references
+            let db_references = db.pluckAll(new SQL()
+                .select("reference")
+                .from("message_references")
+                .where({ message_rid: db_message.rid })
+                );
+            db_references.sort();
+            let imap_references = Utils.clean_references(imap_message.headers);
+            imap_references.sort();
+            assert.deepEqual(imap_references, db_references);
         }
         console.log(`Mailbox '${mailbox}' passed integrity check.`);
     }

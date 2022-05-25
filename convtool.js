@@ -110,9 +110,9 @@ program.command('drop')
     .option("--all", "Drop entire message cache and all conversations")
     .action((options) => register(async (account) => {
         if (options.all)
-            await account.dropEverything();
+            account.dropEverything();
         else
-            await account.dropAllConversations();
+            account.dropAllConversations();
     }));
 
     /*
@@ -189,6 +189,8 @@ program.parse();
             config = configFile.accounts[accountName];
     }
 
+    config = Object.assign(configFile.common, config);
+
     // Config
     if (program.opts().debug)
         config.debug = console.log;
@@ -196,9 +198,6 @@ program.parse();
     config.info = console.log;
 
 
-    // Connect
-    await Database.open(config);
-        
     // Create IMAP object
     let account = new Account(config);
     await account.open();
@@ -217,7 +216,6 @@ program.parse();
     
     // Close
     await account.close();
-    await Database.close()
 })();
 
 

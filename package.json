@@ -9,10 +9,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "better-sqlite3": "^7.5.3",
     "commander": "^9.2.0",
     "glob": "^8.0.3",
     "mocha": "^10.0.0",
-    "mongodb": "^4.6.0",
     "node-imap": "^0.9.6",
     "readline-sync": "^1.4.10"
   }

@@ -1,4 +1,8 @@
 {
+    "common":
+    {
+        "data_dir": "./data"
+    },
     "accounts": 
     {
         "rs": {
@@ -8,9 +12,7 @@
             "host": "mxdev.toptensoftware.com",
             "port": 993,
             "tls": true,
-            "db_server": "mongodb://localhost:44017/?directConnection=true",
-            "db_name": "mxdev",
-            "db_base_collection_name": "mxdev"
+            "db_name": "mxdev"
         },
 
         "tts": {
@@ -19,9 +21,7 @@
             "host": "mx2.toptensoftware.com",
             "port": 993,
             "tls": true,
-            "db_server": "mongodb://localhost:44017/?directConnection=true",
-            "db_name": "mx2",
-            "db_base_collection_name": "mx2"
+            "db_name": "mx2"
         },
 
         "testsuite": {
@@ -30,9 +30,7 @@
             "host": "localhost",
             "port": 44143,
             "tls": false,
-            "db_server": "mongodb://localhost:44017/?directConnection=true", 
-            "db_name": "testsuite",
-            "db_base_collection_name": "testsuite"
+            "db_name": "testsuite"
         }
     }
 }
