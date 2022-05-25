@@ -14,7 +14,7 @@
             "args": [
                 //"list", "CAL_=jJhou74Up_czMwoHJ27KSkTgt7fatFyuYpZutgvTfu_tZg@mail.gmail.com"
                 //"snapshot", "--restore", "1"
-                "-a", "tts", "status", "--conversations"
+                "-a", "tts", "list", "INBOX"
             ],
             "program": "${workspaceFolder}\\convtool.js"
         },

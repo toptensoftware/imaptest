@@ -5,8 +5,9 @@ const readline = require('readline-sync');
 const program = require('commander').program;
 
 const Imap = require('./lib/ImapPromise');
-const Database = require('./lib/Database');
 const Account = require('./lib/Account');
+const SQL = require('./lib/SQL');
+const Utils = require('./lib/Utils');
 
 let _action;
 
@@ -46,6 +47,34 @@ program.command('drop')
             account.dropEverything();
         else
             account.dropAllConversations();
+    }));
+
+
+program.command('list')
+    .description("Drop all conversations")
+    .argument("mailbox", "The mailbox to show")
+    .option("--take", "The number of items to show", 25)
+    .option("--skip", "The number of items to skip", 0)
+    .action((mailbox, options) => register(async (account) => {
+
+        function format_flags(f)
+        {
+            return `[${f & 1 ? 'I' : '-'}${f&2 ? 'U' : '-'}]`
+        }
+
+        for (let c of account.db.iterate(new SQL()
+            .select()
+            .from("conversation_mailboxes")
+            .leftJoin("conversations").on("conversation_mailboxes.conversation_rid = conversations.rid")
+            .where({ mailbox: mailbox })
+            .orderBy("date DESC")
+            .skipTake(parseInt(options.skip), parseInt(options.take))
+        ))
+        {
+            let d = new Date(c.date * 1000);
+            console.log(Utils.format_date("d M Y H:i", d), format_flags(c.flags), c.subject);
+        }
+
     }));
 
 
