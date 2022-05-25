@@ -14,7 +14,7 @@
             "args": [
                 //"list", "CAL_=jJhou74Up_czMwoHJ27KSkTgt7fatFyuYpZutgvTfu_tZg@mail.gmail.com"
                 //"snapshot", "--restore", "1"
-                "-a", "tts", "list", "INBOX"
+                "-a", "tts", "list", "Sent", "--detail", "3"
             ],
             "program": "${workspaceFolder}\\convtool.js"
         },
@@ -25,8 +25,8 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            //"program": "${workspaceFolder}\\TestSync.js"
-            "program": "${workspaceFolder}\\TestConversations.js"
+            "program": "${workspaceFolder}\\TestSync.js"
+            //"program": "${workspaceFolder}\\TestConversations.js"
             //"program": "${workspaceFolder}\\TestMailboxView.js"
         },
         {            

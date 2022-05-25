@@ -55,12 +55,15 @@ program.command('list')
     .argument("mailbox", "The mailbox to show")
     .option("--take", "The number of items to show", 25)
     .option("--skip", "The number of items to skip", 0)
+    .option('--detail <level>', "Detail level (1, 2 or 3)", 1)
     .action((mailbox, options) => register(async (account) => {
 
         function format_flags(f)
         {
             return `[${f & 1 ? 'I' : '-'}${f&2 ? 'U' : '-'}]`
         }
+
+        let detail = parseInt(options.detail);
 
         for (let c of account.db.iterate(new SQL()
             .select()
@@ -73,6 +76,30 @@ program.command('list')
         {
             let d = new Date(c.date * 1000);
             console.log(Utils.format_date("d M Y H:i", d), format_flags(c.flags), c.subject);
+
+            if (detail > 1)
+            {
+                // Show participants
+                for (let a of Utils.parse_participants(c.participants))
+                {
+                    console.log(`   * ${a.format()}`);
+                }
+
+                if (detail > 2)
+                {
+                    console.log(`   * Conversation-Id: ${c.conversation_id}`);
+                    for (let m of account.db.iterate(new SQL()
+                        .select()
+                        .from("conversation_messages")
+                        .leftJoin("messages").on("conversation_messages.message_id = messages.message_id")
+                        .where({ conversation_rid: c.rid})
+                        .orderBy("date DESC")
+                        ))
+                    {
+                        console.log(`   - ${Utils.format_date("d M Y H:i", new Date(m.date * 1000))} ${format_flags(m.flags)} ${m.mailbox} ${m.uid} ${m.participants}`);
+                    }
+                }
+            }
         }
 
     }));

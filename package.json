@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "address-rfc2822": "^2.1.0",
     "better-sqlite3": "^7.5.3",
     "commander": "^9.2.0",
     "glob": "^8.0.3",
