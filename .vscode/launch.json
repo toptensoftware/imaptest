@@ -7,6 +7,17 @@
         {
             "type": "pwa-node",
             "request": "launch",
+            "name": "Run Server",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/server.js",
+            "restart": true,
+            "runtimeExecutable": "nodemon"
+        },
+        {
+            "type": "pwa-node",
+            "request": "launch",
             "name": "Launch Program",
             "skipFiles": [
                 "<node_internals>/**"
@@ -28,18 +39,6 @@
             "program": "${workspaceFolder}\\TestSync.js"
             //"program": "${workspaceFolder}\\TestConversations.js"
             //"program": "${workspaceFolder}\\TestMailboxView.js"
-        },
-        {            
-            "type": "pwa-node",            
-            "request": "launch",            
-            "name": "Mocha all tests",            
-            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",            
-            "args": [           
-               "--no-timeouts",     
-               "${workspaceRoot}/test/messageSync.js"            
-            ],            
-            "cwd": "${workspaceRoot}",   
-            "internalConsoleOptions": "openOnSessionStart"        
-         }    
+        }
     ]
 }
