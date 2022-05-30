@@ -5,6 +5,7 @@ import App from './App.vue'
 import router from './router'
 import useAppState from './AppState';
 import { set } from 'pinia/node_modules/vue-demi';
+import 'material-symbols';
 
 const app = createApp(App)
 app.use(router)
@@ -32,6 +33,7 @@ TODO:
 - report spam button
 - delete forever when in Trash/Spam
 - empty trash/spam
+- click outside to close sidebar popup
 
 
 */
