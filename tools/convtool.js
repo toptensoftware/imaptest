@@ -4,10 +4,10 @@ const readline = require('readline-sync');
 
 const program = require('commander').program;
 
-const Imap = require('./lib/ImapPromise');
-const Account = require('./lib/Account');
-const SQL = require('./lib/SQL');
-const Utils = require('./lib/Utils');
+const Imap = require('../lib/ImapPromise');
+const Account = require('../lib/Account');
+const SQL = require('../lib/SQL');
+const Utils = require('../lib/Utils');
 
 let _action;
 

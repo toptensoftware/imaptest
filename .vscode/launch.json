@@ -11,9 +11,10 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}/server.js",
+            "program": "${workspaceFolder}/server/server.js",
             "restart": true,
-            "runtimeExecutable": "nodemon"
+            "runtimeExecutable": "nodemon",
+            "cwd": "${workspaceFolder}/server"
         },
         {
             "type": "pwa-node",

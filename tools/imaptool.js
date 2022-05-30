@@ -5,7 +5,7 @@ const glob = require('glob');
 
 const { program } = require('commander');
 
-const Imap = require('./lib/ImapPromise');
+const Imap = require('../lib/ImapPromise');
 
 let _action;
 

@@ -1,9 +1,9 @@
 const assert = require('assert');
 
-const Utils = require('./lib/Utils');
-const Imap = require('./lib/IMapPromise');
-const Account = require('./lib/Account');
-const SQL = require('./lib/SQL');
+const Utils = require('../lib/Utils');
+const Imap = require('../lib/IMapPromise');
+const Account = require('../lib/Account');
+const SQL = require('../lib/SQL');
 
 let config = {
     user: 'testSuite',

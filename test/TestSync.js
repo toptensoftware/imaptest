@@ -1,5 +1,5 @@
 const assert = require('assert');
-const SQL = require('./lib/SQL');
+const SQL = require('../lib/SQL');
 const TestSuite = require("./TestSuite")
 
 new TestSuite().run(async (ts) => {
