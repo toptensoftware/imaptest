@@ -1,0 +1,9 @@
+{
+    "data_dir": "./data",
+
+    "imap": {
+        "host": "mxdev.toptensoftware.com",
+        "port": 993,
+        "tls": true
+    }
+}
