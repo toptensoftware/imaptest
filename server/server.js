@@ -39,7 +39,18 @@ app.use(cookieParser())
 app.use(bodyParser.json());
 
 // Routes
+app.use('/api', require('./auth'));
 app.use('/api', require('./api'));
+
+// Error handler
+app.use((error, req, res, next) => {
+    if (error instanceof HttpError)
+    {
+        res.send(error.code, error.message);
+    }
+    else
+        next();
+})
 
 // Start server
 const port = process.env.PORT || config.port || 4000;
