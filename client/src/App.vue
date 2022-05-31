@@ -1,21 +1,27 @@
 <script setup>
-  import HeaderBar from './HeaderBar.vue';
-  import SideBar from './SideBar.vue';
-  import MainContent from './MainContent.vue';
-  import FloatingComposeButton from './FloatingComposeButton.vue';
+    import HeaderBar from './HeaderBar.vue';
+    import SideBar from './SideBar.vue';
+    import MainContent from './MainContent.vue';
+    import FloatingComposeButton from './FloatingComposeButton.vue';
+    import { useRoute } from 'vue-router';
+
+    const route = useRoute();
 </script>
 
 <template>
 
-  <HeaderBar />
+    <template v-if="route.meta.container == 'none'">
+        <router-view></router-view>
+    </template>
 
-  <div id="main-container">
-
-    <SideBar />
-    <MainContent />
-    <FloatingComposeButton />
-
-  </div>
+    <template v-if="!route.meta.container">
+        <HeaderBar />
+        <div id="main-container">
+            <SideBar />
+            <MainContent />
+            <FloatingComposeButton />
+        </div>
+    </template>
 
 </template>
 

@@ -4,6 +4,7 @@ export default defineStore('appState', {
 
     state: () => 
     ({
+        sessionKey: null,
         user: "brad@rocketskeleton.com",
         use_short_name: false,
         activeFolder: null,
@@ -60,6 +61,7 @@ export default defineStore('appState', {
             else
                 return state.messages.reduce((acc, obj) => obj.selected ? acc + 1 : acc, 0);  
         },
+        authenticated: (state) => !!state.sessionKey,
         mode: (state) => 
         {
             if (state.activeMessageId)
@@ -77,6 +79,9 @@ export default defineStore('appState', {
                 return null;
         },
         pageTitle: (state) => {
+
+            if (state.mode == "nouser")
+                return "Login";
 
             let parts = [];
             if (state.activeMessage)
@@ -109,6 +114,16 @@ export default defineStore('appState', {
 
     actions:
     {
+        login(user, password) 
+        {
+            this.sessionKey = "msk";
+            this.$router.push("/mail");
+        },
+        logout()
+        {
+            this.sessionKey = null;  
+            this.$router.push("/login");
+        },
         setRouteState(routeParams)
         {
             if (routeParams.folder)

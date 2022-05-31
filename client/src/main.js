@@ -1,23 +1,33 @@
 
-import { createApp } from 'vue'
+import { createApp, watch, markRaw } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
-import router from './router'
 import useAppState from './AppState';
-import { set } from 'pinia/node_modules/vue-demi';
+import router from './router'
 import 'material-symbols';
 
 const app = createApp(App)
+const pinia = createPinia();
+
+pinia.use(({ store }) => {
+    store.$router = markRaw(router)
+});
+
 app.use(router)
-app.use(createPinia());
+app.use(pinia);
 
 const state = useAppState();
 
 router.beforeResolve((to) => {
-
-    state.setRouteState(to.params);
-    document.title = state.pageTitle;
-
+    if (!to.meta.guest && !state.authenticated)
+    {
+        return "/login";
+    }
+    else
+    {
+        state.setRouteState(to.params);
+        document.title = state.pageTitle;
+    }
 });
 
 app.mount('#app')
@@ -47,6 +57,9 @@ preventing csrf https://portswigger.net/web-security/csrf/samesite-cookies
 rest apis:
     * https://stackoverflow.blog/2020/03/02/best-practices-for-rest-api-design/
     * https://stackoverflow.blog/2021/10/06/best-practices-for-authentication-and-authorization-for-rest-apis/
+
+local storage vs cookies:
+    https://dev.to/rdegges/please-stop-using-local-storage-1i04
 
 */
 

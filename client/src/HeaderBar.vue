@@ -57,7 +57,8 @@ function navigateUp()
             <button class="icon-button"><span class="symbol">snooze</span></button>
             </template>
 
-            <button class="icon-button" data-bs-toggle="modal" data-bs-target="#testModal"><span class="symbol">settings</span></button>
+            <button class="icon-button" @click="state.logout()"><span class="symbol">settings</span></button>
+            <!--button class="icon-button" data-bs-toggle="modal" data-bs-target="#testModal"><span class="symbol">settings</span></button-->
 
         </div>
     </header>

@@ -14,7 +14,7 @@ const state = useAppState();
         </button>
 
         <div class="folder-list list-group" v-for="g in state.folderGroups" :key="g.group">
-            <router-link :to="'/' + f.name" class="list-group-item list-group-item-action" :class="{active: state.activeFolder == f.name}" v-for="f in g.items">
+            <router-link :to="'/mail/' + f.name" class="list-group-item list-group-item-action" :class="{active: state.activeFolder == f.name}" v-for="f in g.items">
                 <span>
                     <span class="symbol">{{ f.icon }}</span> 
                     {{ f.title }}

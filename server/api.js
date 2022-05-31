@@ -23,8 +23,8 @@ let router = express.Router();
 //     * xxxx - session id as primary key into the sessions table
 //     * yyyy - the initialization vector data for decrypting the session
 //              username and password from the db.
-// Note as session key and access to the database will allow retrieval
-// of the user's username AND password... but we need to keep that info
+// Note a session key + access to the database allows retrieval
+// of the user's username AND password. We need to keep that info
 // around to establish connection to IMAP server.
 router.post('/requestSessionKey', asyncHandler(async (req, res) => {
 
@@ -68,6 +68,7 @@ router.post('/requestSessionKey', asyncHandler(async (req, res) => {
 }));
 
 
+// An in-memory cache of recently validated session keys
 let SessionKeyCache = new Map();
 
 // Session key verification
