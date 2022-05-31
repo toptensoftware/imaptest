@@ -4,6 +4,7 @@ const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser')
 const morgan = require('morgan');
 
 const Account = require('../lib/Account');
@@ -34,6 +35,7 @@ const app = express();
 // Setup middleware
 app.use(morgan('tiny'));
 app.use(cors());
+app.use(cookieParser())
 app.use(bodyParser.json());
 
 // Routes

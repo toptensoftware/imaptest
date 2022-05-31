@@ -16,6 +16,7 @@ db.migrate([
             tableName: "sessions",
             columns: [
                 { sessionId: "STRING NOT NULL" },
+                { sessionToken: "STRING" },
                 { timestamp: "INTEGER NOT NULL" },
                 { user: "STRING NOT NULL" },
                 { data: "STRING NOT NULL" }
