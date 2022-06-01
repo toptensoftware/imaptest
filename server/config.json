@@ -1,9 +1,14 @@
 {
     "data_dir": "../data",
 
+    "use_csrf_tokens": true,
+    "csrf_token_regenerate_seconds": 10,
+
     "imap": {
         "host": "mxdev.toptensoftware.com",
         "port": 993,
         "tls": true
     }
 }
+
+

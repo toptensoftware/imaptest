@@ -17,7 +17,7 @@ db.migrate([
             columns: [
                 { sessionId: "STRING NOT NULL" },
                 { sessionToken: "STRING" },
-                { timestamp: "INTEGER NOT NULL" },
+                { expiry: "INTEGER NOT NULL" },
                 { user: "STRING NOT NULL" },
                 { data: "STRING NOT NULL" }
             ],

@@ -13,6 +13,7 @@ const Utils = require('../lib/Utils');
 
 const HttpError = require('./HttpError');
 const config = require('./config');
+const { resolveSoa } = require('dns');
 
 
 /*
@@ -33,10 +34,12 @@ let account;
 const app = express();
 
 // Setup middleware
-app.use(morgan('tiny'));
+//app.use(morgan('tiny'));
+app.use(morgan('combined'));
 app.use(cors());
 app.use(cookieParser())
 app.use(bodyParser.json());
+app.use(express.static("public"));
 
 // Routes
 app.use('/api', require('./auth'));
@@ -44,12 +47,24 @@ app.use('/api', require('./api'));
 
 // Error handler
 app.use((error, req, res, next) => {
+
+    let r = {
+        code: 500,
+        message: error.message,
+    }
+
+    if (process.env.NODE_ENV == "development")
+    {
+        r.stack =  error.stack;
+    }
+
     if (error instanceof HttpError)
     {
-        res.send(error.code, error.message);
+        r.code = error.code;
     }
-    else
-        next();
+
+
+    res.send(r.code, JSON.stringify(r, null, 4));
 })
 
 // Start server

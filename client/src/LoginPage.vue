@@ -1,13 +1,40 @@
 <script setup>
+import { ref } from 'vue';
 import useAppState from './AppState';
 import { useRouter } from 'vue-router';
 
 const state = useAppState();
 const router = useRouter();
 
-function onSubmit()
+const user = ref("");
+const pass = ref("");
+
+async function onSubmit()
 {
-    state.login("blah", "blah");
+    let response = await fetch("http://localhost:4000/api/createSession", {
+
+        method: 'POST',
+        credentials: "same-origin",
+        cache: "no-cache",
+        headers: { 'Content-Type': 'application/json', },
+        body: JSON.stringify({ user: user.value, pass: pass.value })
+    });
+    let data = await response.json();
+
+    if (data.result == "OK")
+    {
+        let response = await fetch("http://localhost:4000/api/openSession", {
+
+            method: 'POST',
+            credentials: "same-origin",
+            cache: "no-cache",
+            headers: { 'Content-Type': 'application/json', },
+            body: JSON.stringify({  })
+        });
+        let data = await response.json();
+        alert(JSON.stringify(data));
+    }
+
 }
 
 </script>
@@ -25,14 +52,14 @@ function onSubmit()
                 <div class="form-group">
                     <div class="input-group">
                     <span class="input-group-text"><i class="symbol">person_outline</i></span>
-                    <input type="username" class="form-control" id="username" placeholder="Username" autofocus>
+                    <input v-model="user" type="username" class="form-control" id="username" placeholder="Username" autofocus>
                     </div>
                 </div>
                 
                 <div class="form-group mt-1">
                     <div class="input-group">
                         <span class="input-group-text"><i class="symbol">lock</i></span>
-                    <input type="password" class="form-control" id="password" placeholder="Password">
+                    <input v-model="pass" type="password" class="form-control" id="password" placeholder="Password">
                     </div>
                 </div>
 

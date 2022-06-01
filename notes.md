@@ -81,20 +81,4 @@ Local storage vs cookies: https://dev.to/rdegges/please-stop-using-local-storage
 
 Content Security Policy: https://michaelzanggl.com/articles/web-security-xss/#content-security-policy-csp
 
-API:
-
-1. Session Key provides look up into db with initialization vector to decrypt user name and password.
-
-2. Login endpoint sets a SameSite Strict cookie holding the session key.
-
-3. Open session api validates Session Key and returns a non-HttpOnly cookie holding csrf token
-
-4. All subsequent API calls pass the session key (as cookie) and csrf token (as custom header field).  Server to validate the session key and the csrf token - and occasionally return a new CSRF token.
-
-5. Client side the csrf token should be held in memory (javascript object) inside a function closure to prevent access from XSS scripts.
-
-6. Neither session key nor csrf token should be kept in local storage.
-
-7. Server origin validation. Origin and Referer
-
 

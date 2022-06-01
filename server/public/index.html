@@ -1,0 +1,140 @@
+<html>
+<head>
+
+    <script>
+
+        let session_token;
+
+        function cookies()
+        {
+            return document.cookie.split(';').reduce((cookies, cookie) => {
+                const [ name, value ] = cookie.split('=').map(c => c.trim());
+                cookies[name] = value;
+                return cookies;
+            }, {});            
+        }
+
+        function deleteTokenCookie()
+        {
+            document.cookie = "msk-session-token= ; expires = Thu, 01 Jan 1970 00:00:00 GMT"
+        }
+
+        async function fetchJson(method, endPoint, data)
+        {            
+            let options = {
+                method: method,
+                credentials: "same-origin",
+                cache: "no-cache",
+                body: JSON.stringify(data),
+                headers: {}
+            }
+            if (method == 'POST')
+                options.headers['Content-Type'] = 'application/json';
+
+            if (session_token)
+                options.headers['msk-session-token'] = session_token;
+
+            let response = await fetch(endPoint, options);
+            if (response.status < 200 || response.status > 299)
+                throw new Error("Server error:" + response.status);
+
+            let rdata = await response.json();
+
+            let new_token = cookies()['msk-session-token'];
+            if (new_token)
+            {
+                session_token = new_token;
+                deleteTokenCookie();
+            }
+
+            return rdata;
+        }
+
+        async function post(endPoint, data)
+        {
+            return fetchJson("POST", endPoint, data);
+        }
+
+        async function get(endPoint)
+        {
+            return fetchJson("GET", endPoint);
+        }
+
+        function showToken()
+        {
+            alert(`token: ${session_token} cookie: ${cookies()['msk-session-token']}`);
+        }
+
+        async function createSession()
+        {
+            try
+            {
+                let r = await post("/api/createSession", { 
+                    user: "brad@rocketskeleton.com", 
+                    pass:"rafiki23",
+                    persistent: true,
+                });
+
+                alert("Session created");
+            }
+            catch (err)
+            {
+                alert(err.message);
+            }
+        }
+
+        async function openSession()
+        {
+            try
+            {
+                let r = await post("/api/openSession", { });
+
+                alert("Session opened - " + session_token);
+            }
+            catch (err)
+            {
+                alert(err.message);
+            }
+        }
+
+        async function deleteSession()
+        {
+            try
+            {
+                let r = await post("/api/deleteSession", { });
+                session_token = null;
+                alert("Session deleted");
+
+            }
+            catch (err)
+            {
+                alert(err.message);
+            }
+        }
+
+        async function testSession()
+        {
+            try
+            {
+                let r = await get("/api/folders");
+
+                alert(JSON.stringify(r));;
+            }
+            catch (err)
+            {
+                alert(err.message);
+            }
+        }
+
+    </script>
+</head>
+<body>
+    
+<button onclick="createSession()">Create Session</button>
+<button onclick="openSession()">Open Session</button>
+<button onclick="deleteSession()">Delete Session</button>
+<button onclick="testSession()">Test Session</button>
+<button onclick="deleteTokenCookie()">Delete Token Cookie</button>
+<button onclick="showToken()">Show Token</button>
+</body>
+</html>
