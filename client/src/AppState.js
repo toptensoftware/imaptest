@@ -1,10 +1,12 @@
 import { defineStore } from 'pinia';
+import api from './api';
 
 export default defineStore('appState', {
 
     state: () => 
     ({
-        sessionKey: null,
+        appLoading: true,
+        authenticated: false,
         user: "brad@rocketskeleton.com",
         use_short_name: false,
         activeFolder: null,
@@ -61,9 +63,12 @@ export default defineStore('appState', {
             else
                 return state.messages.reduce((acc, obj) => obj.selected ? acc + 1 : acc, 0);  
         },
-        authenticated: (state) => !!state.sessionKey,
         mode: (state) => 
         {
+            if (state.appLoading)
+                return "appLoading";
+            if (!state.authenticated)
+                return "noauth";
             if (state.activeMessageId)
                 return "message";
 
@@ -80,7 +85,7 @@ export default defineStore('appState', {
         },
         pageTitle: (state) => {
 
-            if (state.mode == "nouser")
+            if (!state.authenticated)
                 return "Login";
 
             let parts = [];
@@ -114,15 +119,22 @@ export default defineStore('appState', {
 
     actions:
     {
-        login(user, password) 
+        setAppLoading(value)
         {
-            this.sessionKey = "msk";
-            this.$router.push("/mail");
+            this.appLoading = value;
+        },
+        setAuthenticated(value)
+        {
+            this.authenticated = value
         },
         logout()
         {
-            this.sessionKey = null;  
-            this.$router.push("/login");
+            try
+            {
+                api.post('/api/deleteSession');
+            }
+            catch { /* don't care */ }
+            this.authenticated = false;
         },
         setRouteState(routeParams)
         {
@@ -139,6 +151,8 @@ export default defineStore('appState', {
                 this.activeMessageId = routeParams.message_id;
             else
                 this.activeMessageId = null;
+
+            document.title = this.pageTitle;
         },
 
         toggleShortName()

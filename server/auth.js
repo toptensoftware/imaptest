@@ -103,8 +103,8 @@ router.post('/createSession', asyncHandler(async (req, res) => {
 
         // Work out cookie options
         let cookieOptions = {
-            sameSite: process.env.NODE_ENV !== "development",
-            httpOnly: process.env.NODE_ENV !== "development",
+            sameSite: 'strict', // process.env.NODE_ENV !== "development",
+            httpOnly: true,
             secure: process.env.NODE_ENV !== "development"
         };
         if (req.body.persistent)

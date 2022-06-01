@@ -55,7 +55,7 @@ app.use((error, req, res, next) => {
         console.error(r.stack);
     }
 
-    res.send(r.code, JSON.stringify(r, null, 4));
+    res.status(r.code).send(JSON.stringify(r, null, 4));
 })
 
 // Start server

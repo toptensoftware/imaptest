@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, nextTick } from 'vue';
 import useAppState from './AppState';
 import { useRouter } from 'vue-router';
 import api from './api';
@@ -10,19 +10,34 @@ const router = useRouter();
 const user = ref("");
 const pass = ref("");
 const persistent = ref(false);
+const elPass = ref(null);
+const loginFailed = ref(false);
+const busy = ref(false);
 
 async function onSubmit()
 {
-    let r = await api.post("/api/createSession", {
-        user: user.value,
-        pass: pass.value,
-        persistent: persistent.value
-    });
+    try
+    {
+        loginFailed.value = false;
+        busy.value = true;
+        await api.post("/api/createSession", {
+            user: user.value,
+            pass: pass.value,
+            persistent: persistent.value
+        });
 
-    alert(JSON.stringify(r));
+        await api.post("/api/openSession", {});
+    }
+    catch (err)
+    {
+        busy.value = false;
+        loginFailed.value = true;
+        pass.value = "";
+        nextTick(() => elPass.value.focus());
+        return;
+    }
 
-    let r2 = await api.post("/api/openSession", {});
-    alert(JSON.stringify(r2));
+    state.setAuthenticated(true);
 }
 
 </script>
@@ -31,7 +46,7 @@ async function onSubmit()
     <div class="login-form vh-100 d-flex align-items-center justify-content-center">
         
         <form class="row">
-            <fieldset>
+            <fieldset :disabled="busy">
 
                 <p class="text-center">
                 <img src="/icon_dark_fine.svg" />
@@ -47,7 +62,7 @@ async function onSubmit()
                 <div class="form-group mt-1">
                     <div class="input-group">
                         <span class="input-group-text"><i class="symbol">lock</i></span>
-                    <input v-model="pass" type="password" class="form-control" id="password" placeholder="Password">
+                        <input v-model="pass" ref="elPass" type="password" class="form-control" id="password" placeholder="Password">
                     </div>
                 </div>
 
@@ -57,8 +72,15 @@ async function onSubmit()
                 </div>
                 
                 <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary" @click="onSubmit">Login</button>
+                    <button type="submit" class="btn btn-primary" @click="onSubmit">
+                        <span v-if="busy" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <span v-else>Login</span>
+                    </button>
                 </div>            
+
+                <p class="text-warning text-center mt-5" :class="{invisible: !loginFailed}">
+                    Login failed.
+                </p>
 
             </fieldset>
         </form>    

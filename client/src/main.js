@@ -19,15 +19,7 @@ app.use(pinia);
 const state = useAppState();
 
 router.beforeResolve((to) => {
-    if (!to.meta.guest && !state.authenticated)
-    {
-        return "/login";
-    }
-    else
-    {
-        state.setRouteState(to.params);
-        document.title = state.pageTitle;
-    }
+    state.setRouteState(to.params);
 });
 
 app.mount('#app')

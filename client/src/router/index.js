@@ -1,24 +1,13 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import MessageList from '../MessageList.vue'
 import MessageView from '../MessageView.vue'
-import LoginPage from '../LoginPage.vue'
 
 const router = createRouter({
   //history: createWebHistory(import.meta.env.BASE_URL),
   history: createWebHashHistory(),
   routes: [
     {
-      path: '/login',
-      name: 'loginPage',
-      component: LoginPage,
-      meta: {
-                            // see router.beforeResolve in main.js
-        guest: true,        // Doesn't require auth to acess
-        container: "none",  // Doesn't require frame container (headers, sidebar etc...)
-      }
-    },
-    {
-      path: '/mail',
+      path: '/',
       redirect: '/mail/inbox'
     },
     {

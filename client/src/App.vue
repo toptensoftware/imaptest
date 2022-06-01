@@ -3,18 +3,26 @@
     import SideBar from './SideBar.vue';
     import MainContent from './MainContent.vue';
     import FloatingComposeButton from './FloatingComposeButton.vue';
+    import LoginPage from './LoginPage.vue';
+    import LoadingPage from './LoadingPage.vue';
     import { useRoute } from 'vue-router';
+    import useAppState from './AppState';
 
     const route = useRoute();
+    const state = useAppState();
 </script>
 
 <template>
 
-    <template v-if="route.meta.container == 'none'">
-        <router-view></router-view>
+    <template v-if="state.mode == 'appLoading'">
+        <LoadingPage />
     </template>
 
-    <template v-if="!route.meta.container">
+    <template v-else-if="state.mode == 'noauth'">
+        <LoginPage />
+    </template>
+
+    <template v-else>
         <HeaderBar />
         <div id="main-container">
             <SideBar />
