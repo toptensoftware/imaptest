@@ -5,9 +5,9 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "API Server",
             "type": "pwa-node",
             "request": "launch",
-            "name": "Run Server",
             "skipFiles": [
                 "<node_internals>/**"
             ],
@@ -18,32 +18,45 @@
             "env": {
                 "NODE_ENV": "development",
             },
-            "console": "integratedTerminal"
+            "outputCapture": "std",
+            //"console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "",
+                "order": 1
+            }
         },
         {
-            "type": "pwa-node",
+            "name": "Vue Server",
             "request": "launch",
-            "name": "Launch Program",
+            "runtimeArgs": [
+                "run",
+                "dev"
+            ],
+            "runtimeExecutable": "npm",
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "args": [
-                //"list", "CAL_=jJhou74Up_czMwoHJ27KSkTgt7fatFyuYpZutgvTfu_tZg@mail.gmail.com"
-                //"snapshot", "--restore", "1"
-                "-a", "tts", "list", "Sent", "--detail", "3"
-            ],
-            "program": "${workspaceFolder}\\convtool.js"
+            "type": "node",
+            "cwd": "${workspaceFolder}/client",
+            "presentation": {
+                "hidden": true,
+                "group": "",
+                "order": 1
+            }
         },
         {
-            "type": "pwa-node",
+            "name": "Debug Browser",
+            "type": "pwa-msedge",
             "request": "launch",
-            "name": "Test Suite",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "program": "${workspaceFolder}\\TestSync.js"
-            //"program": "${workspaceFolder}\\TestConversations.js"
-            //"program": "${workspaceFolder}\\TestMailboxView.js"
+            "url": "http://localhost:3000",
+            "webRoot": "${workspaceFolder}/client"
+        },
+    ],
+    "compounds": [
+        {
+            "name": "API and Vue Servers",
+            "configurations": ["API Server", "Vue Server"]
         }
     ]
 }

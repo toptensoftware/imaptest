@@ -19,8 +19,7 @@ const config = require('./config');
 const app = express();
 
 // Setup middleware
-//app.use(morgan('tiny'));
-app.use(morgan('combined'));
+app.use(morgan('tiny'));
 app.use(cookieParser())
 app.use(bodyParser.json());
 app.use(express.static("public"));

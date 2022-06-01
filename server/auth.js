@@ -68,7 +68,7 @@ function trimOldSessionKeys()
 // of the user's username AND password. We need to keep that info
 // around to establish connection to IMAP server.
 router.post('/createSession', asyncHandler(async (req, res) => {
-
+    
     let imap;
     try
     {
