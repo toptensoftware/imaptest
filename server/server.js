@@ -13,22 +13,7 @@ const Utils = require('../lib/Utils');
 
 const HttpError = require('./HttpError');
 const config = require('./config');
-const { resolveSoa } = require('dns');
 
-
-/*
-let account;
-(async () => {
-
-    let a  = new Account(config);
-    await a.open();
-    await a.sync();
-    account = a;
-
-    console.log("Account synced");
-
-})();
-*/
 
 // Create expression app
 const app = express();
@@ -36,10 +21,11 @@ const app = express();
 // Setup middleware
 //app.use(morgan('tiny'));
 app.use(morgan('combined'));
-app.use(cors());
 app.use(cookieParser())
 app.use(bodyParser.json());
 app.use(express.static("public"));
+if (config.cors)
+    app.use(cors(config.cors));
 
 // Routes
 app.use('/api', require('./auth'));
@@ -63,6 +49,11 @@ app.use((error, req, res, next) => {
         r.code = error.code;
     }
 
+    if (r.code == 500)
+    {
+        console.error(r.message);
+        console.error(r.stack);
+    }
 
     res.send(r.code, JSON.stringify(r, null, 4));
 })

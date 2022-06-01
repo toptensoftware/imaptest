@@ -2,39 +2,27 @@
 import { ref } from 'vue';
 import useAppState from './AppState';
 import { useRouter } from 'vue-router';
+import api from './api';
 
 const state = useAppState();
 const router = useRouter();
 
 const user = ref("");
 const pass = ref("");
+const persistent = ref(false);
 
 async function onSubmit()
 {
-    let response = await fetch("http://localhost:4000/api/createSession", {
-
-        method: 'POST',
-        credentials: "same-origin",
-        cache: "no-cache",
-        headers: { 'Content-Type': 'application/json', },
-        body: JSON.stringify({ user: user.value, pass: pass.value })
+    let r = await api.post("/api/createSession", {
+        user: user.value,
+        pass: pass.value,
+        persistent: persistent.value
     });
-    let data = await response.json();
 
-    if (data.result == "OK")
-    {
-        let response = await fetch("http://localhost:4000/api/openSession", {
+    alert(JSON.stringify(r));
 
-            method: 'POST',
-            credentials: "same-origin",
-            cache: "no-cache",
-            headers: { 'Content-Type': 'application/json', },
-            body: JSON.stringify({  })
-        });
-        let data = await response.json();
-        alert(JSON.stringify(data));
-    }
-
+    let r2 = await api.post("/api/openSession", {});
+    alert(JSON.stringify(r2));
 }
 
 </script>
@@ -64,7 +52,7 @@ async function onSubmit()
                 </div>
 
                 <div class="form-check form-switch mt-3 mb-4">
-                    <input class="form-check-input" type="checkbox" id="persistent-login">
+                    <input v-model="persistent" class="form-check-input" type="checkbox" id="persistent-login">
                     <label class="form-check-label" for="flexSwitchCheckChecked">Trust this device and stay logged in</label>
                 </div>
                 

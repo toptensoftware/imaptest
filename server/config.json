@@ -1,8 +1,13 @@
 {
     "data_dir": "../data",
 
-    "use_csrf_tokens": true,
+    "use_csrf_tokens": false,
     "csrf_token_regenerate_seconds": 10,
+
+    "cors": {
+        "origin": "http://localhost:3000",
+        "credentials": true
+    },
 
     "imap": {
         "host": "mxdev.toptensoftware.com",
