@@ -11,7 +11,7 @@ let config = {
     host: 'localhost',
     port: 44143,
     tls: false,
-    data_dir: "./data",
+    data_dir: "../data",
     db_name: "testsuite",
     info: console.log,
     //debug: console.log
