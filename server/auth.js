@@ -3,10 +3,11 @@ const asyncHandler = require('express-async-handler');
 
 const ImapPromise = require('../lib/ImapPromise');
 const Utils = require('../lib/Utils');
+const HttpError = require('../lib/HttpError');
 
-const HttpError = require('./HttpError');
 const db = require('./db');
 const config = require('./config');
+const WorkerAccount = require('./WorkerAccount');
 
 // Create router
 let router = express.Router();
@@ -242,16 +243,14 @@ function generateSessionToken(req, res)
     res.cookie("msk-session-token", req.login.sessionToken, cookieOptions)
 }
 
-// Open the session and return session token via cookie
-router.post('/openSession', (req, res) => {
+// Open the session always generates a new session token
+router.post('/openSession', (req, res, next) => {
 
     // Generate session token
     generateSessionToken(req, res);
 
-    // TODO: return initial application state
-
-    // Done
-    res.json({result: "OK"});
+    // Carry on
+    next();
 });
 
 
@@ -274,7 +273,19 @@ router.use((req, res, next) => {
         }
     }
     
-    next();
+    // Open the account
+    WorkerAccount.get(req.login.user, req.login.password)
+        .then((account) => { req.account = account; next(); })
+        .catch(next);
 });
+
+
+// Open the session always generates a new session token
+router.post('/openSession', (req, res) => {
+
+    res.json({result: "OK"});
+
+});
+
 
 module.exports = router;

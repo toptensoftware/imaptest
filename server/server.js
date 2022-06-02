@@ -11,7 +11,7 @@ const Account = require('../lib/Account');
 const ImapPromise = require('../lib/IMapPromise');
 const Utils = require('../lib/Utils');
 
-const HttpError = require('./HttpError');
+const HttpError = require('../lib/HttpError');
 const config = require('./config');
 
 
