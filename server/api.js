@@ -1,5 +1,4 @@
 const express = require('express');
-const asyncHandler = require('express-async-handler');
 
 const ImapPromise = require('../lib/ImapPromise');
 const Utils = require('../lib/Utils');

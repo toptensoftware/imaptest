@@ -7,9 +7,6 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser')
 const morgan = require('morgan');
 
-const Account = require('../lib/Account');
-const ImapPromise = require('../lib/IMapPromise');
-const Utils = require('../lib/Utils');
 
 const HttpError = require('../lib/HttpError');
 const config = require('./config');

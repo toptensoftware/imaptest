@@ -1,5 +1,4 @@
 const express = require('express');
-const asyncHandler = require('express-async-handler');
 
 const ImapPromise = require('../lib/ImapPromise');
 const Utils = require('../lib/Utils');
@@ -7,7 +6,7 @@ const HttpError = require('../lib/HttpError');
 
 const db = require('./db');
 const config = require('./config');
-const WorkerAccount = require('./WorkerAccount');
+const Account = require('./Account');
 
 // Create router
 let router = express.Router();
@@ -68,7 +67,7 @@ function trimOldSessionKeys()
 // Warning: a session key + access to the database allows retrieval
 // of the user's username AND password. We need to keep that info
 // around to establish connection to IMAP server.
-router.post('/createSession', asyncHandler(async (req, res) => {
+router.post('/createSession', async (req, res) => {
     
     let imap;
     try
@@ -126,7 +125,7 @@ router.post('/createSession', asyncHandler(async (req, res) => {
         throw new HttpError(401, err);
     }
 
-}));
+});
 
 
 // An in-memory cache of recently validated session keys
@@ -274,7 +273,7 @@ router.use((req, res, next) => {
     }
     
     // Open the account
-    WorkerAccount.get(req.login.user, req.login.password)
+    Account.get(req.login.user, req.login.password)
         .then((account) => { req.account = account; next(); })
         .catch(next);
 });

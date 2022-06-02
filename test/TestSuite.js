@@ -2,7 +2,7 @@ const assert = require('assert');
 
 const Utils = require('../lib/Utils');
 const Imap = require('../lib/IMapPromise');
-const Account = require('../lib/Account');
+const WorkerAccount = require('../lib/WorkerAccount');
 const SQL = require('../lib/SQL');
 
 let config = {
@@ -73,7 +73,7 @@ class TestSuite
 
         // Create db account
         console.log(`Opening and cleaning DB account`);
-        this.account = new Account(config);
+        this.account = new WorkerAccount(config);
         await this.account.open();
         await this.account.dropEverything();
 
