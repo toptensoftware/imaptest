@@ -56,7 +56,7 @@ function onAction(event, action)
             v-for="message in state.messages" 
             :key="message.message_id"
             class="message-list-item" 
-            :class="{unread: message.unread}" 
+            :class="{unread: message.unread, read: !message.unread}" 
             :data-message-id="message.message_id"
             @click="onAction($event, 'click')"
             >
@@ -150,7 +150,7 @@ function onAction(event, action)
     font-weight: bold;
 }
 
-.message-list-item+:not(.unread)
+.message-list .read
 {
     color: rgba(var(--bs-body-color-rgb), 0.6);
 }

@@ -97,6 +97,7 @@
     text-rendering: optimizeLegibility;
     font-feature-settings: "liga";
     transform: translate(0, .18em);
+    font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 48;
 }
 .symbol-filled {
     font-family: "Material Symbols Outlined";
@@ -114,7 +115,7 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     font-feature-settings: "liga";
-    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 48;
+    font-variation-settings: 'FILL' 1, 'wght' 200, 'GRAD' 0, 'opsz' 48;
     transform: translate(0, .18em);
 }
 
