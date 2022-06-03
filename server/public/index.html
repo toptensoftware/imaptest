@@ -5,6 +5,11 @@
 
         let session_id = null;
 
+        
+        window.onunload = function () {
+            closeSession();
+        }
+
         function setCsrfToken(token)
         {
             if (token == null)

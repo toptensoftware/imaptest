@@ -22,8 +22,9 @@ class Session
     {
         if (this.account != null)
         {
-            await this.account.close();
+            let account = this.account;
             this.account = null;
+            await account.close();
         }
     }
 }

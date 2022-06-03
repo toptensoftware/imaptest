@@ -10,6 +10,7 @@ const config = require('./config');
 const Session = require('./Session');
 const SQL = require('../lib/SQL');
 const { update } = require('../lib/SQL');
+const AsyncLock = require('../lib/AsyncLock');
 
 // Create router
 let router = express.Router();
@@ -22,7 +23,7 @@ function purgeExpiredLogins()
 {
     db.run("DELETE FROM logins WHERE expiry < ?", Math.floor(Date.now() / 1000));
 }
-setTimeout(purgeExpiredLogins, 1000 * 60 * 60 * 24);
+setInterval(purgeExpiredLogins, 1000 * 60 * 60 * 24);
 purgeExpiredLogins();
 
 
@@ -132,13 +133,9 @@ router.post('/logout', asyncHandler(async (req, res) => {
     {
         if (v.loginId == loginKey.loginId)
         {
-            waitList.push(v.close());
             sessionMap.delete(k);
+            v.close();
         }
-    }
-    if (waitList.length)
-    {
-        await Promise.allSettled(waitList);
     }
 
     // Done
@@ -221,6 +218,21 @@ function parseSessionKey(key)
     throw new HttpError(401, "invalid key");
 }
 
+// Every minute, close sessions that haven't been accessed for
+// more that five minutes
+async function purgeExpiredSessions()
+{
+    for (let [k,v] of sessionMap)
+    {
+        if (v.access_time + 5 * 60 * 1000 < Date.now())
+        {
+            sessionMap.delete(k);
+            v.close();
+        }
+    }
+}
+setInterval(purgeExpiredSessions, 60 * 1000);
+
 
 
 // Open session
@@ -294,6 +306,8 @@ router.post('/closeSession', asyncHandler(async (req, res) => {
 
     // Close session
     let session = sessionMap.get(sessionId);
+
+    // Delete the session
     sessionMap.delete(sessionId)
     if (session)
     {
@@ -304,14 +318,15 @@ router.post('/closeSession', asyncHandler(async (req, res) => {
     res.json({});
 }));
 
-// Login key verification
-router.use((req, res, next) => {
+// session id verification
+router.use(asyncHandler(async (req, res, next) => {
 
     // Get the session id
     let sessionId = parseSessionKey(req.headers['x-session-id']);
 
-    // Close session
+    // Get session
     req.session = sessionMap.get(sessionId);
+    
     if (!req.session)
         throw new HttpError(401, 'invalid key');
 
@@ -320,7 +335,6 @@ router.use((req, res, next) => {
 
     // Carry on
     next();
-
-});
+}));
 
 module.exports = router;
