@@ -3,8 +3,22 @@
 
     <script>
 
-        let session_token;
+        let session_id = null;
 
+        function setCsrfToken(token)
+        {
+            if (token == null)
+                localStorage.removeItem("x-csrf-token");
+            else
+                localStorage.setItem("x-csrf-token", token);
+        }
+
+        function getCsrfToken()
+        {
+            return localStorage.getItem("x-csrf-token")
+        }
+
+        /*
         function cookies()
         {
             return document.cookie.split(';').reduce((cookies, cookie) => {
@@ -13,11 +27,7 @@
                 return cookies;
             }, {});            
         }
-
-        function deleteTokenCookie()
-        {
-            document.cookie = "msk-session-token= ; expires = Thu, 01 Jan 1970 00:00:00 GMT"
-        }
+        */
 
         async function fetchJson(method, endPoint, data)
         {            
@@ -31,20 +41,22 @@
             if (method == 'POST')
                 options.headers['Content-Type'] = 'application/json';
 
-            if (session_token)
-                options.headers['msk-session-token'] = session_token;
+            let csrf_token = getCsrfToken();
+            if (csrf_token)
+                options.headers['x-csrf-token'] = csrf_token;
+            if (session_id)
+                options.headers['x-session-id'] = session_id;
 
             let response = await fetch(endPoint, options);
             if (response.status < 200 || response.status > 299)
                 throw new Error("Server error:" + response.status);
-
+                
             let rdata = await response.json();
 
-            let new_token = cookies()['msk-session-token'];
-            if (new_token)
+            for (let [k,v] of response.headers)
             {
-                session_token = new_token;
-                deleteTokenCookie();
+                if (k == "x-csrf-token")
+                    setCsrfToken(v);
             }
 
             return rdata;
@@ -62,20 +74,36 @@
 
         function showToken()
         {
-            alert(`token: ${session_token} cookie: ${cookies()['msk-session-token']}`);
+            alert(`csrf_token: ${getCsrfToken()} session_id: ${session_id}`);
         }
 
-        async function createSession()
+        async function login()
         {
             try
             {
-                let r = await post("/api/createSession", { 
+                let r = await post("/api/login", { 
                     user: "brad@rocketskeleton.com", 
                     pass:"rafiki23",
                     persistent: true,
                 });
 
-                alert("Session created");
+                alert("Logged in");
+            }
+            catch (err)
+            {
+                alert(err.message);
+            }
+        }
+
+        async function logout()
+        {
+            try
+            {
+                let r = await post("/api/logout", { });
+                setCsrfToken(null);
+                session_id = null;
+                alert("Logged out");
+
             }
             catch (err)
             {
@@ -89,7 +117,9 @@
             {
                 let r = await post("/api/openSession", { });
 
-                alert("Session opened - " + session_token);
+                session_id = r.sessionId;
+
+                alert("Session opened - " + session_id);
             }
             catch (err)
             {
@@ -97,14 +127,13 @@
             }
         }
 
-        async function deleteSession()
+        async function closeSession()
         {
             try
             {
-                let r = await post("/api/deleteSession", { });
-                session_token = null;
-                alert("Session deleted");
-
+                let r = await post("/api/closeSession", { });
+                session_id = null;
+                alert("Session closed");
             }
             catch (err)
             {
@@ -126,15 +155,18 @@
             }
         }
 
+        openSession();
+
     </script>
 </head>
 <body>
     
-<button onclick="createSession()">Create Session</button>
+<button onclick="login()">Login</button>
 <button onclick="openSession()">Open Session</button>
-<button onclick="deleteSession()">Delete Session</button>
+<button onclick="closeSession()">Close Session</button>
+<button onclick="logout()">Logout</button>
+
 <button onclick="testSession()">Test Session</button>
-<button onclick="deleteTokenCookie()">Delete Token Cookie</button>
 <button onclick="showToken()">Show Token</button>
 </body>
 </html>

@@ -31,7 +31,7 @@
             "internalConsoleOptions": "openOnSessionStart",
             "outputCapture": "std",
             "presentation": {
-                "hidden": true,
+                "hidden": false,
                 "group": "",
                 "order": 1
             }

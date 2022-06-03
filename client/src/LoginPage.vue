@@ -20,7 +20,7 @@ async function onSubmit()
     {
         loginFailed.value = false;
         busy.value = true;
-        await api.post("/api/createSession", {
+        await api.post("/api/login", {
             user: user.value,
             pass: pass.value,
             persistent: persistent.value

@@ -13,19 +13,24 @@ db.migrate([
     function()
     {
         db.createTable({
-            tableName: "sessions",
+            tableName: "logins",
             columns: [
-                { sessionId: "STRING NOT NULL" },
-                { sessionToken: "STRING" },
+                { loginId: "STRING NOT NULL" },
                 { expiry: "INTEGER NOT NULL" },
                 { user: "STRING NOT NULL" },
-                { data: "STRING NOT NULL" }
+                { data: "STRING NOT NULL" },
+                { persistent: "BOOLEAN NOT NULL"},
+                { rotation: "STRING NOT NULL" },
+                { csrf: "STRING NOT NULL" },
+                { prev_time: "INTEGER NOT NULL"},
+                { prev_rotation: "STRING NOT NULL" },
+                { prev_csrf: "STRING NOT NULL" },
             ],
             indicies: [
                 {
                     unique: true,
                     columns: [
-                        { sessionId: "ASC" },
+                        { loginId: "ASC" },
                     ]
                 }
             ]
