@@ -1,7 +1,7 @@
 {
     "data_dir": "../data",
 
-    "use_csrf_tokens": false,
+    "use_csrf_tokens": true,
     "csrf_token_regenerate_seconds": 10,
 
     "cors": {

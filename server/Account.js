@@ -6,101 +6,96 @@ const WorkerThread = require('../lib/WorkerThread');
 const WorkerAccount = require('../lib/WorkerAccount');
 const config = require('./config');
 
-let accountMap = new Map();
-let accountMapLock = new AsyncLock();
-
 class Account
 {
     constructor(user, password)
     {
-        this.lastAccessTime = 0;
-        this.lastSyncTime = 0;
         this.user = user;
         this.password = password;
-        this.previousPasswords = [];
+        this.access_time = 0;
+        this.sync_revision = 0;
+        this.invalidPasswords = [];
         this.workerThread = null;
         this.workerAccount = null;
+        this.lock = new AsyncLock();
+        this.refCount = 0;
     }
+
+    async open()
+    {
+        // Remember this account was accessed
+        this.access_time = Date.now();
+
+        // Increment the reference count
+        this.refCount++;
+
+        // Quick exit if already open (typical case)
+        if (this.sync_revision != 0)
+            return;
+
+        // Make sure we only do this once
+        await this.lock.section(async () => {
+
+            // Create account config
+            let accountConfig = Object.assign(
+                { data_dir: config.data_dir }, 
+                config.imap, 
+                { user: this.user, password: this.password }
+            );
+
+            // Create the worker thread and worker account
+            this.workerThread = new WorkerThread();
+            this.workerAccount = await this.workerThread.createObject(
+                        path.join(__dirname, "../lib/WorkerAccount"), null, accountConfig);
+
+            // Open it
+            this.sync_revision = await this.workerAccount.openAndSync();
+        });
+
+    }
+
+    async close()
+    {
+        this.refCount--;
+        if (this.refCount == 0)
+        {
+            await (this.lock.section(async () => {
+                await this.workerAccount.close();
+                await this.workerAccount.release();
+                await this.workerThread.terminate();
+                this.workerAccount = null;
+                this.workerThread = null;
+                this.sync_revision = 0;
+            }));
+        }
+    }
+
 }
 
+let accountMap = new Map();
+let accountMapLock = new AsyncLock();
+
 // Get the worker account for a user
-async function getAccount(user, password)
+async function openAccount(user, password)
 {
     // Take a lock while we look up the account
     let account = await accountMapLock.section(async () => {
 
-        // Find existing account
+        // Find or create account
         let account = accountMap.get(user);
-
-        // Already open?
-        if (account != null)
-        {
-            // Check was opened with the same password
-            if (account.password == password)
-                return account;
-
-            // If we reach here it means there are two active
-            // signins for this account with different passwords.
-            // Since passwords are validated via an IMAP sign in
-            // as part of the auth process, the newer login should
-            // take precedence since it's probably the user has 
-            // changed their password.  Force old clients of this
-            // account to re-authorize.
-
-            // Is this and old login?
-            if (account.previousPasswords.indexOf(password) >= 0)
-            {
-                throw new HttpError(401, "password expired");
-            }
-
-            // Remember the old password and update the new one
-            account.previousPasswords.push(account.password);
-            account.password = password;
-
-            // Release the worker account that has the wrong password
-            account.workerAccount.close();      // No await
-            account.workerAccount.release();    // No await
-            account.workerAccount = null;
-        }
-        else
+        if (!account)
         {
             // Create a new account
             account = new Account(user, password);
             accountMap.set(user, account);
         }
 
-        // Create the worker
-        if (account.workerThread == null)
-            account.workerThread = new WorkerThread();
-
-        // Create account config
-        let accountConfig = Object.assign(
-            { data_dir: config.data_dir }, 
-            config.imap, 
-            { user: user, password: password }
-        );
-
-        // Create the worker
-        account.workerAccount = await account.workerThread.createObject(
-                    path.join(__dirname, "../lib/WorkerAccount"), null, accountConfig);
-
-        // Remember not opened/synced yet
-        account.lastSyncTime = 0;
-
         // Done
         return account;
     });
 
-    // If the account was just created do the initial sync
-    if (!account.lastSyncTime)
-    {
-        account.lastSyncTime = Date.now();          // prevent re-entry
-        await account.workerAccount.openAndSync();
-        account.lastSyncTime = Date.now();          // actual
-    }
-
-    // Remember the last access time
-    account.lastAccessTime = Date.now();
+    // Make sure the account is open
+    await account.open();
         
     // Return the worker account
     return account;
@@ -108,5 +103,5 @@ async function getAccount(user, password)
 
 module.exports = 
 {
-    get : getAccount,
+    open : openAccount,
 };

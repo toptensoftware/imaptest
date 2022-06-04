@@ -131,7 +131,7 @@ export default defineStore('appState', {
         {
             try
             {
-                api.post('/api/deleteSession');
+                api.post('/api/logout');
             }
             catch { /* don't care */ }
             this.authenticated = false;
