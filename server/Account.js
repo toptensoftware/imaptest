@@ -3,7 +3,6 @@ const path = require('path');
 const HttpError = require('../lib/HttpError');
 const AsyncLock = require('../lib/AsyncLock');
 const WorkerThread = require('../lib/WorkerThread');
-const WorkerAccount = require('../lib/WorkerAccount');
 const config = require('./config');
 
 class Account
@@ -14,7 +13,6 @@ class Account
         this.password = password;
         this.access_time = 0;
         this.sync_revision = 0;
-        this.invalidPasswords = [];
         this.workerThread = null;
         this.workerAccount = null;
         this.lock = new AsyncLock();
@@ -50,6 +48,7 @@ class Account
 
             // Open it
             this.sync_revision = await this.workerAccount.openAndSync();
+
         });
 
     }
@@ -76,14 +75,38 @@ let accountMap = new Map();
 let accountMapLock = new AsyncLock();
 
 // Get the worker account for a user
-async function openAccount(user, password)
+async function getAccount(user, password)
 {
     // Take a lock while we look up the account
     let account = await accountMapLock.section(async () => {
 
         // Find or create account
         let account = accountMap.get(user);
-        if (!account)
+
+        // If it's got the wrong password, check if the new password is 
+        // correct and use it instead
+        if (account && account.password != password)
+        {
+            // Login to IMAP to verify new username/password
+            try
+            {
+                let imap_config = Object.assign({}, config.imap, { user, password });
+                imap = new ImapPromise(imap_config);
+                await imap.connect();
+                await imap.end();
+            }
+            catch (err)
+            {
+                throw new HttpError(401, 'login failed');
+            }
+
+            // Close the old account
+            accountMap.delete(user);
+            await account.close();
+            account = null;
+        }
+
+        if (account == null)
         {
             // Create a new account
             account = new Account(user, password);
@@ -98,10 +121,10 @@ async function openAccount(user, password)
     await account.open();
         
     // Return the worker account
-    return account;
+    return account.workerAccount;
 }
 
 module.exports = 
 {
-    open : openAccount,
+    get : getAccount,
 };

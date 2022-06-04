@@ -1,32 +1,38 @@
 let assert = require('assert');
-let lp = require('./lib/ListPatch');
-
-let oldList = [
-    { id: 10, count: 1, subject: "apples", unread:true },
-    { id: 20, count: 1, subject: "pears", unread:true },
-    { id: 30, count: 1, subject: "bananas", unread:true },
-    { id: 40, count: 1, subject: "oranges", unread:true },
-    { id: 50, count: 1, subject: "pineapples", unread:true },
-]
 
 
-let newList = [
-    { id: 10, count: 1, subject: "apples", unread:true },
-    { id: 20, count: 1, subject: "pears", unread:true },
-    { id: 30, count: 15, subject: "bananas", unread:true },
-    { id: 40, count: 1, subject: "oranges", unread:true },
-    { id: 50, count: 1, subject: "pineapples", unread:true },
-]
+let folders = [
+    { group: "A", order: 1, name: "snoozed", icon: "snooze", title: "Snoozed" },
+    { group: "A", order: 3, name: "sent", icon: "send", title: "Sent" },
+    { group: "C", order: 5, name: "trash", icon: "delete", title: "Trash" },
+    { group: "C", order: 6, name: "junk", icon: "report", title: "Junk" },
+    { group: "A", order: 2, name: "drafts", icon: "draft", title: "Drafts" },
+    { group: "A", order: 4, name: "archive", icon: "archive", title: "Archive" },
+    { group: "A", order: 0, name: "inbox", icon: "inbox", title: "Inbox", unread: 2 },
+];
+
+function groupBy(array, groupFn)
+{
+    let map = new Map();
+    for (let i=0; i<array.length; i++)
+    {
+        let k = groupFn(array[i]);
+        let group = map.get(k);
+        if (!group)
+        {
+            group = [];
+            map.set(k, group);
+        }
+        group.push(array[i]);
+    }
+
+    return [...map.keys()].map(x => ({
+        group: x,
+        items: map.get(x),
+    }))
+}
 
 
-let edits = lp.build_list_patch(oldList, newList, (a, b) => a.id - b.id, lp.build_patch);
+let r = groupBy(folders, x=>x.group);
 
-lp.apply_list_patch(oldList, newList, edits);
-
-console.log(JSON.stringify(edits));
-
-//console.log(JSON.stringify(oldList, null, 4));
-
-assert.deepEqual(oldList, newList);
-
-console.log("OK");
+console.log(JSON.stringify(r, null, 4));

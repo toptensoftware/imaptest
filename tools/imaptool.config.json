@@ -11,8 +11,7 @@
             "password": "rafiki23",
             "host": "mxdev.toptensoftware.com",
             "port": 993,
-            "tls": true,
-            "db_name": "mxdev"
+            "tls": true
         },
 
         "tts": {
@@ -20,8 +19,7 @@
             "password": "ormapkrcwiipjwik-1U",
             "host": "mx2.toptensoftware.com",
             "port": 993,
-            "tls": true,
-            "db_name": "mx2"
+            "tls": true
         },
 
         "testsuite": {

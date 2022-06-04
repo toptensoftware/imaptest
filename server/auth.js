@@ -7,10 +7,7 @@ const HttpError = require('../lib/HttpError');
 
 const db = require('./db');
 const config = require('./config');
-const Session = require('./Session');
-const SQL = require('../lib/SQL');
-const { update } = require('../lib/SQL');
-const AsyncLock = require('../lib/AsyncLock');
+const Account = require('./Account');
 
 // Create router
 let router = express.Router();
@@ -64,7 +61,6 @@ function setLoginKeyCookie(res, loginRecord, iv)
     // Return csrf token
     res.setHeader("x-csrf-token", loginRecord.csrf);
 
-
     // Return the login 
     let loginKey = `msk-${loginRecord.loginId}-${iv}-${loginRecord.rotation}`;
     res.cookie('msk-login-key', loginKey, cookieOptions);
@@ -75,11 +71,17 @@ router.post('/login', asyncHandler(async (req, res) => {
     let imap;
     try
     {
-        // Encrypt it
-        let encrypted = Utils.encryptJson(config.encryption_key, {
+        // Open account
+        let login = {
             user: req.body.user,
             password: req.body.pass
-        });
+        };
+
+        // Open the account
+        await Account.get(login.user, login.password);
+
+        // Encrypt it
+        let encrypted = Utils.encryptJson(config.encryption_key, login);
 
         // Work out when the login expires
         // For non-persistent logins, keep them in the db for 1 day
@@ -124,19 +126,8 @@ router.post('/logout', asyncHandler(async (req, res) => {
     // Remove from database
     db.run("DELETE FROM logins WHERE loginId=?", loginKey.loginId);
 
-    // Clear session key and token cookies
+    // Clear login key cookie
     res.clearCookie('msk-login-key');
-
-    // Close all sessions associated with this login
-    let waitList = [];
-    for (let [k,v] of sessionMap)
-    {
-        if (v.loginId == loginKey.loginId)
-        {
-            sessionMap.delete(k);
-            v.close();
-        }
-    }
 
     // Done
     res.json({});
@@ -145,7 +136,7 @@ router.post('/logout', asyncHandler(async (req, res) => {
 
 
 // Login key verification
-router.use((req, res, next) => {
+router.use(asyncHandler(async (req, res, next) => {
 
     // Get the login key
     let loginKey = parseLoginKey(req.cookies['msk-login-key']);
@@ -155,17 +146,15 @@ router.use((req, res, next) => {
     if (!loginRecord)
         throw new HttpError(401, "invalid key");
 
-    // Check valid
+    // Decrypt record
     let login = Utils.decryptJson(config.encryption_key, loginRecord.data, loginKey.iv);
-        
-    // Check it decrypted properly
     if (loginRecord.user != login.user)
-        throw new Error("compromised key");
+        throw new Error("invalid key");
 
     // Compromise detection
     if (loginRecord.rotation != loginKey.rotation)
     {
-        // Allow a 30-second roll over period of using the old rotation key
+        // Allow a 30-second grace period of using the old rotation key
         if (loginRecord.prev_time == 0 || 
             loginRecord.prev_time + 30 * 1000 < Date.now() / 1000 ||
             loginRecord.prev_rotation != loginKey.rotation)
@@ -177,7 +166,7 @@ router.use((req, res, next) => {
     // Check CSRF token
     if (loginRecord.csrf != req.headers['x-csrf-token'])
     {
-        // Allow a 30-second roll over period of using the old rotation key
+        // Allow a 30-second grace period of using the old rotation key
         if (loginRecord.prev_time == 0 || 
             loginRecord.prev_time + 30 * 1000 < Date.now() / 1000 ||
             loginRecord.prev_csrf != req.headers['x-csrf-token'])
@@ -186,155 +175,33 @@ router.use((req, res, next) => {
         }
     }
 
-    // Attach login info to request
-    req.login = {
-        loginRecord, 
-        loginKey,
-        login
-    }
-
-    // Carry on
-    next();
-});
-
-
-
-
-// -------------------------- SESSION --------------------------
-
-
-let sessionMap = new Map();
-
-// Parse a session key
-function parseSessionKey(key)
-{
-    if (key)
-    {
-        let parts = key.split('-');
-        if (parts.length == 2 && parts[0] == 'msk')
-            return parts[1];
-    }
-
-    throw new HttpError(401, "invalid key");
-}
-
-// Every minute, close sessions that haven't been accessed for
-// more that five minutes
-async function purgeExpiredSessions()
-{
-    for (let [k,v] of sessionMap)
-    {
-        if (v.access_time + 5 * 60 * 1000 < Date.now())
-        {
-            sessionMap.delete(k);
-            v.close();
-        }
-    }
-}
-setInterval(purgeExpiredSessions, 60 * 1000);
-
-
-
-// Open session
-router.post('/openSession', asyncHandler(async (req, res) => {
-
     // Rotate login key
-    if (req.login.loginRecord.prev_time + 30 * 1000 < Date.now() / 1000)
+    if (loginRecord.prev_time + 30 * 1000 < Date.now() / 1000)
     {
-        req.login.loginRecord.rotation = Utils.random(16);
-        req.login.loginRecord.csrf = Utils.random(16);
+        loginRecord.rotation = Utils.random(16);
+        loginRecord.csrf = Utils.random(16);
         db.run("UPDATE logins SET prev_rotation = rotation, prev_csrf = csrf, prev_time = ?, rotation=?, csrf=? WHERE loginId=?", 
             Math.floor(Date.now() / 1000),
-            req.login.loginRecord.rotation,
-            req.login.loginRecord.csrf, 
-            req.login.loginRecord.loginId
+            loginRecord.rotation,
+            loginRecord.csrf, 
+            loginRecord.loginId
         );
-        setLoginKeyCookie(res, req.login.loginRecord, req.login.loginKey.iv);
+        setLoginKeyCookie(res, loginRecord, loginKey.iv);
     }
 
-
-    // Login to IMAP to verify username/password
+    // Attach the account to the request
     try
     {
-        let imap_config = Object.assign({}, config.imap, req.login.login);
-        imap = new ImapPromise(imap_config);
-        await imap.connect();
-        await imap.end();
+        req.account = await Account.get(login.user, login.password);
     }
     catch (err)
     {
-        throw new HttpError(401, 'login failed');
+        throw new HttpError(401, "failed to open account");
     }
-
-    // Now that we've validated the user name/password, invalidate any 
-    // other sessions for the same user with a different password
-    // Remove them all from the list first, then wait for them to close
-    let waitList = [];
-    for (let [k,v] of sessionMap)
-    {
-        if (v.user == req.login.login.user && 
-            v.password != req.login.login.password)
-        {
-            waitList.push(v.close());
-            sessionMap.delete(k);
-        }
-    }
-    if (waitList.length)
-    {
-        await Promise.allSettled(waitList);
-    }
-
-    // Create and open session
-    let session = new Session(req.login.loginRecord.loginId, req.login.login.user, req.login.login.password);
-    await session.open();
-
-    // Store it
-    sessionMap.set(session.sessionId, session);
-
-    // Return session id
-    res.json({
-        sessionId: `msk-${session.sessionId}`,
-    })
-}));
-
-
-// Close session
-router.post('/closeSession', asyncHandler(async (req, res) => {
-
-    // Get the session id
-    let sessionId = parseSessionKey(req.headers['x-session-id']);
-
-    // Close session
-    let session = sessionMap.get(sessionId);
-
-    // Delete the session
-    sessionMap.delete(sessionId)
-    if (session)
-    {
-        await session.close();
-    }
-
-    // Done
-    res.json({});
-}));
-
-// session id verification
-router.use(asyncHandler(async (req, res, next) => {
-
-    // Get the session id
-    let sessionId = parseSessionKey(req.headers['x-session-id']);
-
-    // Get session
-    req.session = sessionMap.get(sessionId);
     
-    if (!req.session)
-        throw new HttpError(401, 'invalid key');
-
-    // Remember activity
-    req.session.access_time = Date.now();
-
     // Carry on
     next();
 }));
+
 
 module.exports = router;

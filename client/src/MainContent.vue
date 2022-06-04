@@ -1,9 +1,9 @@
 <script>
-import MessageList from "./MessageList.vue";
+import ConversationList from "./ConversationList.vue";
 
 export default {
   components: {
-    MessageList
+    ConversationList
   }
 }
 </script>

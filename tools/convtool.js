@@ -5,7 +5,7 @@ const readline = require('readline-sync');
 const program = require('commander').program;
 
 const Imap = require('../lib/ImapPromise');
-const Account = require('../lib/WorkerAccount');
+const WorkerAccount = require('../lib/WorkerAccount');
 const SQL = require('../lib/SQL');
 const Utils = require('../lib/Utils');
 

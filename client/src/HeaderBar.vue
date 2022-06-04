@@ -26,9 +26,9 @@ function navigateUp()
             
             <button class="icon-button" id="toggle-sidebar-button" onclick="toggleSideBar()"><span class="symbol">menu</span></button>
 
-            <button class="icon-button" v-if="state.mode == 'message'" @click="navigateUp()"><span class="symbol">arrow_back</span></button>
+            <button class="icon-button" v-if="state.mode == 'conversation'" @click="navigateUp()"><span class="symbol">arrow_back</span></button>
 
-            <div class="dropdown" v-if="state.mode != 'message'">
+            <div class="dropdown" v-if="state.mode != 'conversation'">
                 <button class="selection-dropdown icon-button dropdown-toggle" data-bs-toggle="dropdown" id="select_dropdown"><span class="symbol">indeterminate_check_box</span></button>
                 <ul class="dropdown-menu" aria-labelledby="select_dropdown">
                     <li><a @click="state.select('all')" class="dropdown-item" href="#">All</a></li>
@@ -44,13 +44,15 @@ function navigateUp()
                 <b>{{state.selected_count}}</b>
             </div>
 
-            <div id="header-text" class="flex-grow-1" v-if="state.mode == 'select' || state.mode == 'message'">
-                {{state.activeMessage?.subject}}
+            <button class="icon-button" id="refresh" v-if="state.mode == 'normal'" @click="state.refresh()"><span class="symbol">refresh</span></button>
+
+            <div id="header-text" class="flex-grow-1" v-if="state.mode == 'select' || state.mode == 'conversation'">
+                {{state.activeConversation?.subject}}
             </div>
 
             <input type="text" id="search-box" placeholder="search" class="form-control flex-grow-1" v-if="state.mode == 'normal'">
 
-            <template v-if="state.mode == 'select' || state.mode == 'message'">
+            <template v-if="state.mode == 'select' || state.mode == 'conversation'">
             <button class="icon-button"><span class="symbol">archive</span></button>
             <button class="icon-button" @click="state.deleteSelected()"><span class="symbol">delete</span></button>
             <button class="icon-button"><span class="symbol">mail</span></button>
@@ -128,7 +130,7 @@ header .icon-button
     align-items: center;
 }
 
-.selection-dropdown
+#refresh
 {
     margin-right: 0.5rem;
 }

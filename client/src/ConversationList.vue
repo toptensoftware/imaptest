@@ -7,41 +7,41 @@ const state = useAppState();
 const router = useRouter();
 const route = useRoute();
 
-function message_id_from_event(event)
+function conversation_id_from_event(event)
 {
-    return event.target.closest('.message-list-item').dataset.messageId;
+    return event.target.closest('.conversation-list-item').dataset.conversationId;
 }
 
 function onAction(event, action)
 {
     event.stopPropagation();
 
-    let message_id = message_id_from_event(event);
+    let conversation_id = conversation_id_from_event(event);
 
     switch(action)
     {
         case "click":
-            router.push(route.path + '/' + message_id);
+            router.push(route.path + '/' + conversation_id);
             break;
 
         case "select":
-            state.toggleMessageSelected(message_id);
+            state.toggleConversationSelected(conversation_id);
             break;
 
         case "important":
-            state.toggleMessageImportant(message_id);
+            state.toggleConversationImportant(conversation_id);
             break;
 
         case "delete":
-            state.deleteMessage(message_id);
+            state.deleteConversation(conversation_id);
             break;
 
         case "unread":
-            state.toggleMessageUnread(message_id);
+            state.toggleConversationUnread(conversation_id);
             break;
 
         default:
-            alert(`${action}: ${message_id}`);
+            alert(`${action}: ${conversation_id}`);
             break;
     }
 }
@@ -50,24 +50,24 @@ function onAction(event, action)
 
 <template>
 
-    <div class="message-list" id="message-list">
+    <div class="conversation-list" id="conversation-list">
 
         <div 
-            v-for="message in state.messages" 
-            :key="message.message_id"
-            class="message-list-item" 
-            :class="{unread: message.unread, read: !message.unread}" 
-            :data-message-id="message.message_id"
+            v-for="conversation in state.conversations" 
+            :key="conversation.conversation_id"
+            class="conversation-list-item" 
+            :class="{unread: (conversation.flags & 2)!=0, read: (conversation.flags & 2)==0}" 
+            :data-conversation-id="conversation.conversation_id"
             @click="onAction($event, 'click')"
             >
         
             <div class="flags">
                 <button class="icon-button flag-selected" @click="onAction($event, 'select')">
-                    <span v-if="message.selected" class="symbol">check_box</span>
+                    <span v-if="conversation.selected" class="symbol">check_box</span>
                     <span v-else class="symbol">check_box_outline_blank</span>
                 </button>
                 <button class="icon-button flag-important" @click="onAction($event, 'important')">
-                    <span v-if="message.important" class="symbol-filled" style="color:orange">label_important</span>
+                    <span v-if="conversation.flags & 1" class="symbol-filled" style="color:orange">label_important</span>
                     <span v-else class="symbol">label_important</span>
                 </button>  
             </div>
@@ -75,16 +75,18 @@ function onAction(event, action)
             <div class="detail-container">
 
                 <div class="participants">
-                    {{ message.participants }}
+                    {{ conversation.participants }}
                     <button class="icon-button alignment-hack" style="width:0px;overflow:hidden;padding-left:0;padding-right:0"><span class="symbol">archive</span></button>
                 </div>
 
                 <div class=subject>
-                    {{ message.subject }}
+                    <div class="subject-text">
+                        {{ conversation.subject }}
+                    </div>
                 </div>
 
                 <div class=date>
-                    {{ message.date }}
+                    {{ conversation.date }}
                 </div>
 
                 <div class="actions">
@@ -101,7 +103,7 @@ function onAction(event, action)
 </template>
 
 <style>
-.message-list-item
+.conversation-list-item
 {
     border-bottom:1px solid #444;
     cursor: pointer;
@@ -109,19 +111,19 @@ function onAction(event, action)
     justify-items: baseline;
 }
 
-.message-list-item .flags
+.conversation-list-item .flags
 {
     width: 48px;
     min-width: 48px;
     height: 48px;
 }
 
-.message-list-item .flag-selected .symbol
+.conversation-list-item .flag-selected .symbol
 {
     font-size:30px;
 }
 
-.message-list-item .detail-container
+.conversation-list-item .detail-container
 {
     flex-grow: 1;
     display: flex;
@@ -130,48 +132,48 @@ function onAction(event, action)
     justify-items: baseline;
 }
 
-.message-list-item .alignment-hack
+.conversation-list-item .alignment-hack
 {
     display:none;
 }
 
-.message-list-item:hover button
+.conversation-list-item:hover button
 {
     color: var(--bs-body-color);
 }
 
-.message-list-item:not(hover) button
+.conversation-list-item:not(hover) button
 {
     color: var(--bs-gray);
 }
 
-.message-list .unread
+.conversation-list .unread
 {
     font-weight: bold;
 }
 
-.message-list .read
+.conversation-list .read
 {
     color: rgba(var(--bs-body-color-rgb), 0.6);
 }
 
-.message-list-item:hover
+.conversation-list-item:hover
 {
     color: var(--bs-body-color);
 }
 
 
-.message-list-item button
+.conversation-list-item button
 {
     padding: 0.2rem 0.4rem;
 }
 
-.message-list-item:hover
+.conversation-list-item:hover
 {
     background-color: rgba(0,0,0,0.1);
 }
 
-.message-list-item .participants
+.conversation-list-item .participants
 {
     flex-grow: 1;
     white-space: nowrap;
@@ -179,23 +181,23 @@ function onAction(event, action)
     text-overflow: ellipsis;
 }
 
-.message-list-item .subject
+.conversation-list-item .subject
 {
     width: 100%;
     order: 3;
 }
 
-.message-list-item .actions
+.conversation-list-item .actions
 {
     display:none;
 }
 
-.message-list-item .flag-important
+.conversation-list-item .flag-important
 {
     display:none;
 }
 
-.message-list-item
+.conversation-list-item
 {
     font-size:0.9rem;
 }
@@ -203,53 +205,67 @@ function onAction(event, action)
 
 @media screen and (min-width:576px)
 {
-    .message-list-item
+    .conversation-list-item
     {
         font-size:unset;
     }
 
-    .message-list-item .participants
+    .conversation-list-item .participants
     {
-        flex-basis: 200px;
+        width: 200px;
+        /*flex-basis: 200px;*/
         flex-grow: unset;
+        padding-right:.5em;
     }
-    .message-list-item .subject
+    .conversation-list-item .subject
     {
-        flex-basis: 0px;
+        flex-basis: 0;
+        width: 0;
         flex-grow: 1;
+        min-width: 0;
+        order:unset;
+    }
+
+    .conversation-list-item .subject-text
+    {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        padding-left:.5em;
-        order:unset;
     }
-    .message-list-item .flag-important
+
+
+    .conversation-list-item .flag-important
     {
         display:inline-block;
     }        
 
-    .message-list-item .flag-selected .symbol
+    .conversation-list-item .flag-selected .symbol
     {
         font-size:19px;
     }
-    .message-list-item .flags
+    .conversation-list-item .flags
     {
         width: 72px;
         min-width: 72px;
         height: unset;
     }
     
-    .message-list-item:hover .actions
+    .conversation-list-item:hover .actions
     {
         display:block;
     }
     
-    .message-list-item:hover .date
+    .conversation-list-item .date
+    {
+        flex-basis: 100px;
+    }
+    
+    .conversation-list-item:hover .date
     {
         display:none;
     }
     
-    .message-list-item .alignment-hack
+    .conversation-list-item .alignment-hack
     {
         display:inline-block;
     }

@@ -26,7 +26,7 @@ async function onSubmit()
             persistent: persistent.value
         });
 
-        await api.post("/api/openSession", {});
+        await state.start();
     }
     catch (err)
     {
@@ -36,8 +36,6 @@ async function onSubmit()
         nextTick(() => elPass.value.focus());
         return;
     }
-
-    state.setAuthenticated(true);
 }
 
 </script>

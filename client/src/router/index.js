@@ -1,6 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import MessageList from '../MessageList.vue'
-import MessageView from '../MessageView.vue'
+import ConversationList from '../ConversationList.vue'
+import ConversationView from '../ConversationView.vue'
 
 const router = createRouter({
   //history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,22 +13,22 @@ const router = createRouter({
     {
       path: '/mail/search/:q',
       name: 'searchResults',
-      component: MessageList
+      component: ConversationList
     },
     {
-      path: '/mail/search/:q/:message_id',
-      name: 'searchResultsMessage',
-      component: MessageView
+      path: '/mail/search/:q/:conversation_id',
+      name: 'searchResultsConversation',
+      component: ConversationView
     },
     {
-      path: '/mail/:folder/:message_id',
-      name: 'message',
-      component: MessageView
+      path: '/mail/:folder/:conversation_id',
+      name: 'conversation',
+      component: ConversationView
     },
     {
       path: '/mail/:folder',
       name: "folder",
-      component: MessageList
+      component: ConversationList
     },
   ]
 })

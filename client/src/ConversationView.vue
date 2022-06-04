@@ -6,14 +6,14 @@ import { useRoute } from 'vue-router';
 const state = useAppState();
 const route = useRoute();
 
-const message_id = route.params.message_id;
+const conversation_id = route.params.conversation_id;
 
 </script>
 
 <template>
 
-    <div class="message-view" id="message-view">
-        <h2>This is message '{{message_id}}'</h2>
+    <div class="conversation-view" id="conversation-view">
+        <h2>This is conversation '{{conversation_id}}'</h2>
     </div>
 
 </template>

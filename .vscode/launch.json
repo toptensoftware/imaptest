@@ -14,6 +14,17 @@
             "type": "node"
         },
         {
+            "name": "Run ConvTool",
+            "program": "${workspaceFolder}/tools/convtool.js",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "cwd": "${workspaceFolder}/tools",
+            "type": "node",
+            "args": [ "sync" ]
+        },
+        {
             "name": "API Server",
             "type": "pwa-node",
             "request": "launch",
@@ -23,6 +34,9 @@
             "program": "${workspaceFolder}/server/server.js",
             "restart": true,
             "runtimeExecutable": "nodemon",
+            "runtimeArgs": [
+                "--watch", "..\\lib", "--watch", ".",
+            ],
             "cwd": "${workspaceFolder}/server",
             "env": {
                 "NODE_ENV": "development",

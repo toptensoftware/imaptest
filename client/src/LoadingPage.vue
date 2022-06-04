@@ -9,13 +9,11 @@ const state = useAppState();
 onMounted(async () => {
     try
     {
-        await api.post("/api/openSession");
-        state.setAuthenticated(true);
+        state.start();
     }
     catch
     {
     }
-    state.setAppLoading(false);
 });
 
 

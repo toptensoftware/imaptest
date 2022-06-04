@@ -1,29 +1,26 @@
 // Wrapper for all API end point calls
+import useAppState from './AppState';
+import Utils from './Utils';
 
 function wrapApi()
 {
-    // The current session CSRF token. (privatized by wrapping in this closure)
-    let session_token;
-
-    // Helper to split document tokens to a map
-    function cookies()
+    function setCsrfToken(token)
     {
-        return document.cookie.split(';').reduce((cookies, cookie) => {
-            const [ name, value ] = cookie.split('=').map(c => c.trim());
-            cookies[name] = value;
-            return cookies;
-        }, {});            
+        if (token == null)
+            localStorage.removeItem("x-csrf-token");
+        else
+            localStorage.setItem("x-csrf-token", token);
     }
 
-    // Deletes the session CSRF token
-    function deleteTokenCookie()
+    function getCsrfToken()
     {
-        document.cookie = "msk-session-token= ; expires = Thu, 01 Jan 1970 00:00:00 GMT"
+        return localStorage.getItem("x-csrf-token")
     }
+
 
     // Fetch helper
     async function fetchJson(method, endPoint, data)
-    {            
+    {
         // Setup base options
         let options = {
             method: method,
@@ -40,24 +37,31 @@ function wrapApi()
         }
 
         // Add CSRF token
-        if (session_token)
-            options.headers['msk-session-token'] = session_token;
+        let csrf_token = getCsrfToken();
+        if (csrf_token)
+            options.headers['x-csrf-token'] = csrf_token;
 
-        // Make the request, throw if fails
+            // Make the request, throw if fails
         let response = await fetch(endPoint, options);
         if (response.status < 200 || response.status > 299)
+        {
+            if (response.status == 401)
+            {
+                let state = useAppState();
+                state.authError();
+            }
+
             throw new Error("Server error:" + response.status);
+        }
 
         // Get the response data
         let rdata = await response.json();
 
-        // If there was a new CSRF token returned, capture it and then delete
-        // the cookie.
-        let new_token = cookies()['msk-session-token'];
-        if (new_token)
+        // Catch new csrf token
+        for (let [k,v] of response.headers)
         {
-            session_token = new_token;
-            deleteTokenCookie();
+            if (k == "x-csrf-token")
+                setCsrfToken(v);
         }
 
         return rdata;
@@ -70,9 +74,9 @@ function wrapApi()
     }
 
     // Invokes a GET end point
-    async function get(endPoint)
+    async function get(endPoint, query)
     {
-        return fetchJson("GET", endPoint);
+        return fetchJson("GET", endPoint + Utils.queryString(query));
     }
 
     // Exports
