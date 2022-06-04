@@ -82,3 +82,7 @@ Local storage vs cookies: https://dev.to/rdegges/please-stop-using-local-storage
 Content Security Policy: https://michaelzanggl.com/articles/web-security-xss/#content-security-policy-csp
 
 
+
+## Unsubscribe Header:
+
+"List-Unsubscribe":
