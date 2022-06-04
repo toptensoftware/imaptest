@@ -11,6 +11,10 @@ const config = require('./config');
 // Create router
 let router = express.Router();
 
+router.get('/ping', asyncHandler(async (req, res) => {
+    res.json({ user: req.login.user });
+}));
+
 router.post('/sync', asyncHandler(async (req, res) => {
     res.json(await req.account.sync());
 }));
@@ -21,6 +25,10 @@ router.get('/folders', asyncHandler(async (req, res) => {
 
 router.get('/conversations', asyncHandler(async (req, res) => {
     res.json(await req.account.get_conversations(req.query));
+}));
+
+router.get('/conversations_and_mailboxes', asyncHandler(async (req, res) => {
+    res.json(await req.account.get_conversations_and_mailboxes(req.query));
 }));
 
 router.get('/conversation', asyncHandler(async (req, res) => {

@@ -192,6 +192,7 @@ router.use(asyncHandler(async (req, res, next) => {
     // Attach the account to the request
     try
     {
+        req.login = login;
         req.account = await Account.get(login.user, login.password);
     }
     catch (err)

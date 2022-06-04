@@ -20,7 +20,7 @@ function navigateUp()
 <template>
     <!-- Header Area -->
     <header>
-        <div id="title" @click="state.toggleShortName()">{{ state.display_name }}</div> 
+        <div id="title">{{ state.display_name }}</div> 
 
         <div id="header-container">
             
@@ -47,7 +47,7 @@ function navigateUp()
             <button class="icon-button" id="refresh" v-if="state.mode == 'normal'" @click="state.refresh()"><span class="symbol">refresh</span></button>
 
             <div id="header-text" class="flex-grow-1" v-if="state.mode == 'select' || state.mode == 'conversation'">
-                {{state.activeConversation?.subject}}
+                {{state.loadedConversation?.subject}}
             </div>
 
             <input type="text" id="search-box" placeholder="search" class="form-control flex-grow-1" v-if="state.mode == 'normal'">

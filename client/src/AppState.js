@@ -6,169 +6,237 @@ export default defineStore('appState', {
 
     state: () => 
     ({
-        appLoading: true,
-        authenticated: false,
-        user: "brad@rocketskeleton.com",
-        use_short_name: false,
-        activeFolder: null,
-        activeConversationId: null,
-        /*
-        conversations: [
-            { conversation_id: "A", selected: false, important: false, participants: "John, Fred", date: "11:23am", subject: "Product Inquiry", unread: true },
-            { conversation_id: "B", selected: false, important: true, participants: "Jenny, Brad", date: "9:25am", subject: "Let's have lunch", unread: true },
-            { conversation_id: "C", selected: false, important: false, participants: "Mitch", date: "9:17am", subject: "Bug Report" },
-            { conversation_id: "D", selected: false, important: false, participants: "NuGet Gallery", date: "8:07am", subject: "NuGet Package Published" },
-            { conversation_id: "E", selected: false, important: false, participants: "Anthony", date: "May 27", subject: "Software NFR Request" },
-            { conversation_id: "F", selected: false, important: false, participants: "Eric, Brad", date: "Apr 25", subject: "Feature suggestion for new version" },
-            { conversation_id: "G", selected: false, important: false, participants: "npm", date: "Apr 28", subject: "Important information about your npm account" },
-            { conversation_id: "H", selected: false, important: true, participants: "Brad, Jen", date: "Apr 26", subject: "Let's have a party like it's 1999" }
-        ],
-        */
-        conversations: [],
+        _mode: "starting",
+        user: "huh@wah.com",
         folders: [],
+        
+        routeFolder: null,
+        loadedFolderName: null,
+        conversations: [],
+        
+        routeConversationId: null,
+        loadedConversationId: null,
+        loadedConversation: null,
     }),
 
     getters: 
     {
+        // Get the current application mode
+        // 'starting', 'loggedOut', 'conversation', 'select' or 'normal'
+        mode: (state) => 
+        {
+            // Handle 'starting', 'loggedOut' etc...
+            if (state._mode)
+                return state._mode;
+
+            // Viewing a conversation?
+            if (state.routeConversationId)
+                return 'conversation';
+
+            // Selection in conversation list?
+            if (Utils.any(state.conversations, x=> x.selected))
+                return 'select';
+
+            // Normal conversation list view
+            return 'normal';
+        },
+
+        // Get the display name of the logged in user
         display_name: (state) => 
         {
-            if (state.use_short_name)
-            {
-                let atpos = state.user.indexOf('@');
-                if (atpos < 0)
-                    return state.user;
-                return state.user.substring(0, atpos);
-            }
-            else
-                return state.user;
+            return state.user;
         },
+
+        // Get a conversation with specified id
+        getConversation: (state) => {
+            return (conversation_id) => {
+                return state.conversations.find(x => x.conversation_id == conversation_id);
+            }
+        },
+
+        // Get the number of selected conversations
         selected_count: (state) =>
         {
-            if (state.activeConversationId)
+            if (state.routeConversationId)
                 return 1;
             else
                 return state.conversations.reduce((acc, obj) => obj.selected ? acc + 1 : acc, 0);  
         },
-        mode: (state) => 
-        {
-            if (state.appLoading)
-                return "appLoading";
-            if (!state.authenticated)
-                return "noauth";
-            if (state.activeConversationId)
-                return "conversation";
 
-            if (state.conversations.reduce((acc, obj) => obj.selected ? acc + 1 : acc, 0) > 0)
-                return "select";
-            else
-                return "normal";
-        },
-        activeConversation: (state) => {
-            if (state.activeConversationId)
-                return state.conversations.find(x => x.conversation_id == state.activeConversationId);
-            else
-                return null;
-        },
+        // Get the page title
         pageTitle: (state) => {
-
-            if (!state.authenticated)
-                return "Login";
-
-            let parts = [];
-            if (state.activeConversation)
-                parts.push(state.activeConversation.subject);
             
-            else if (state.activeSearch)
-                parts.push("Search Results");
-
-            else
+            let parts = [];
+            switch (state.mode)
             {
-                for (let f of state.folders)
-                {
-                    if (f.name == state.activeFolder)
+                case 'starting':
+                case 'loggedOut':
+                    parts.push("Login");
+                    break;
+
+                case 'conversation':
+                    parts.push(state.loadedConversation?.subject);
+                    break;
+
+                default:
+                    if (state.activeSearch)
+                        parts.push("Search Results");
+                    else
                     {
-                        if (f.count_unread)
-                            parts.push(`(${f.count_unread}) ${f.name}`);
-                        else
-                            parts.push(f.name);
+                        for (let f of state.folders)
+                        {
+                            if (f.name == state.routeFolder)
+                            {
+                                if (f.count_unread)
+                                    parts.push(`(${f.count_unread}) ${f.name}`);
+                                else
+                                    parts.push(f.name);
+                            }
+                        }
                     }
-                }
+        
+                    parts.push(state.user);
+                    break;
             }
 
-            parts.push(state.user);
             return parts.join(" - ");
         },
     },
 
     actions:
     {
+        // Start the application - called from StartPage
         async start()
         {
-            await this.loadConversationList();
-            this.authenticated = true;
-            this.appLoading = false;
-            document.title = this.pageTitle;
+            // Ping server to check if we have a login token
+            // If this fails authError will be called and we'll transition
+            // to the login page.
+            let r = await api.get("/api/ping");
+
+            this.user = r.user;
+
+            // If we get here the ping worked and we must be authorized
+            this._mode = null;
+
+            // Load the conversation list for what ever is on view
+            await this.loadViewData();
         },
 
+        // Called from the login page on explicit user entered login
+        async login(user, pass, persistent)
+        {
+            await api.post("/api/login", {
+                user, pass, persistent
+            });
+    
+            this._mode = null;
+            await this.loadViewData();
+            document.title = this.pageTitle;
+
+            this.user = user;
+        },
+
+        // Logout the current user
+        async logout()
+        {
+            await api.post('/api/logout');
+            this.user = null;
+            this._mode = "loggedOut";
+        },
+
+        // Called from API on any authentication error.
         authError()
         {
-            this.authenticated = false;
-            this.appLoading = false;
+            this._mode = "loggedOut";
             document.title = this.pageTitle;
         },
 
-        async loadConversationList()
+        // Load conversation list for the currently selected folder
+        async loadViewData()
         {
-            // Load folders
-            let r = await api.get("/api/folders");
-            this.folders.splice(0, this.folders.length, ...r.mailboxes);
+            // Don't load conversations if not logged in or still starting
+            if (this._mode == 'starting' || this._mode == 'loggedOut')
+                return;
 
-            // Load conversations
-            r = await api.get("/api/conversations", { mailbox: this.activeFolder } );
-            this.conversations.splice(0, this.conversations.length, ...r.conversations);
+            if (this.routeConversationId)
+            {
+                // Do we already have it loaded?
+                if (this.loadedConversationId != this.routeConversationId)
+                {
+                    // Clear current loaded state
+                    this.loadedConversationId = null;
+
+                    // Use a placeholder from the conversation list until the real conversation loaded
+                    this.loadedConversation = this.conversations.find(x => x.conversation_id == this.routeConversationId);
+
+                    // Fetch it
+                    let options = { 
+                        conversation_id: this.routeConversationId
+                    };
+                    let r = await api.get("/api/conversation", options);
+
+                    // Store loaded conversation (unless route changed in the meantime)
+                    if (this.routeConversationId == options.conversation_id)
+                    {
+                        this.loadedConversationId = this.routeConversationId;
+                        this.loadedConversation = r;
+                    }
+                }
+            }
+
+            if (this.routeFolder != this.loadedFolder)
+            {
+                // Clear currently loaded folder
+                this.loadedFolder = null;
+
+                // Fetch
+                let options = { 
+                    mailbox: this.routeFolder 
+                };
+                let r = await api.get("/api/conversations_and_mailboxes", options);
+
+                // Same folder still selected?
+                if (this.routeFolder == options.mailbox)
+                {
+                    this.loadedFolder = this.routeFolder;
+                    this.conversations.splice(0, this.conversations.length, ...r.conversations.conversations);
+                    this.folders.splice(0, this.folders.length, ...r.mailboxes.mailboxes);
+                }
+            }
         },
 
+        // Prod the server to resync now
         async refresh()
         {
             await api.post("/api/sync");
-            this.loadConversationList();
+            await this.loadViewData();
         },
 
-        logout()
-        {
-            try
-            {
-                api.post('/api/logout');
-            }
-            catch { /* don't care */ }
-            this.authenticated = false;
-        },
+        // Called when route entered... update current state information
+        // and load conversation list if changed
         setRouteState(routeParams)
         {
             if (routeParams.folder)
-                this.activeFolder = routeParams.folder;
+                this.routeFolder = routeParams.folder;
             
             if (routeParams.q)
             {
-                this.activeFolder = null;
+                this.routeFolder = null;
                 this.activeSearch = routeParams.q;
             }
 
             if (routeParams.conversation_id)
-                this.activeConversationId = routeParams.conversation_id;
+                this.routeConversationId = routeParams.conversation_id;
             else
-                this.activeConversationId = null;
+                this.routeConversationId = null;
 
             document.title = this.pageTitle;
-            //this.conversations.splice(0, this.conversations.length, []);
-            this.loadConversationList();
+
+            this.loadViewData();
         },
 
-        toggleShortName()
-        {
-            this.use_short_name = !this.use_short_name;
-        },
 
+        /*
         toggleConversationselected(id)
         {
             let msg = this.conversations.find(x => x.conversation_id == id);
@@ -218,6 +286,7 @@ export default defineStore('appState', {
                 m.selected = sel(m);
             }
         }
+        */
     }
 
 });

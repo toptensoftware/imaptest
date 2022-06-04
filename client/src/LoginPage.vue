@@ -16,17 +16,12 @@ const busy = ref(false);
 
 async function onSubmit()
 {
+    busy.value = true;
+    loginFailed.value = false;
+
     try
     {
-        loginFailed.value = false;
-        busy.value = true;
-        await api.post("/api/login", {
-            user: user.value,
-            pass: pass.value,
-            persistent: persistent.value
-        });
-
-        await state.start();
+        await state.login(user.value, pass.value, persistent.value);
     }
     catch (err)
     {

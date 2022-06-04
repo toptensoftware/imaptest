@@ -2,6 +2,7 @@
 
 import useAppState from './AppState';
 import { useRouter, useRoute } from 'vue-router';
+import Utils from './Utils.js';
 
 const state = useAppState();
 const router = useRouter();
@@ -86,7 +87,7 @@ function onAction(event, action)
                 </div>
 
                 <div class=date>
-                    {{ conversation.date }}
+                    {{ Utils.formatDateFromSeconds(conversation.date) }}
                 </div>
 
                 <div class="actions">
@@ -185,6 +186,11 @@ function onAction(event, action)
 {
     width: 100%;
     order: 3;
+}
+
+.conversation-list-item .date
+{
+    text-align: right;
 }
 
 .conversation-list-item .actions

@@ -4,7 +4,7 @@
     import MainContent from './MainContent.vue';
     import FloatingComposeButton from './FloatingComposeButton.vue';
     import LoginPage from './LoginPage.vue';
-    import LoadingPage from './LoadingPage.vue';
+    import StartPage from './StartPage.vue';
     import { useRoute } from 'vue-router';
     import useAppState from './AppState';
 
@@ -14,11 +14,11 @@
 
 <template>
 
-    <template v-if="state.mode == 'appLoading'">
-        <LoadingPage />
+    <template v-if="state.mode == 'starting'">
+        <StartPage />
     </template>
 
-    <template v-else-if="state.mode == 'noauth'">
+    <template v-else-if="state.mode == 'loggedOut'">
         <LoginPage />
     </template>
 

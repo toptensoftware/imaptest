@@ -80,7 +80,7 @@ const groups = computed(() => {
             <router-link 
                 :to="'/mail/' + f.name" 
                 class="list-group-item list-group-item-action" 
-                :class="{active: state.activeFolder == f.name}" 
+                :class="{active: state.routeFolder == f.name}" 
                 v-for="f in g.items"
                 :key="f.name"
                 >

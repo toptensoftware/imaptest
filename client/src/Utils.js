@@ -26,6 +26,16 @@ function orderBy(array, compareFn)
     return array2;
 }
 
+function any(array, predicate)
+{
+    for (let i of array)
+    {
+        if (predicate(i))
+            return true;
+    }
+    return false;
+}
+
 function compareStrings(a, b)
 {
     if (a < b)
@@ -46,9 +56,32 @@ function queryString(args)
         return "";
 }
 
+function formatDateFromSeconds(d)
+{
+    d = new Date(d * 1000);
+    let now = new Date();
+
+    // Today?
+    if (d.getDate() == now.getDate() && d.getMonth() == now.getMonth() && d.getFullYear() == now.getFullYear())
+        return d.toLocaleTimeString(undefined, { timeStyle: "short" });
+
+    // This year?
+    if (d.getYear() == now.getYear())
+    {
+        return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+    }
+
+    return d.toLocaleDateString(undefined, { dateStyle: "short" });
+}
+
+
+
+
 export default {
     groupBy,
     orderBy,
+    any,
     compareStrings,
     queryString,
+    formatDateFromSeconds,
 }
