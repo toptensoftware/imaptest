@@ -41,10 +41,15 @@ class Account
                 { user: this.user, password: this.password }
             );
 
+            // Store config on the account
+            this.config = accountConfig;
+
             // Create the worker thread and worker account
             this.workerThread = new WorkerThread();
             this.workerAccount = await this.workerThread.createObject(
                         path.join(__dirname, "../lib/WorkerAccount"), null, accountConfig);
+
+            this.workerAccount.config = accountConfig;
 
             // Open it
             this.sync_revision = await this.workerAccount.openAndSync();

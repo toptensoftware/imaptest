@@ -86,3 +86,16 @@ Content Security Policy: https://michaelzanggl.com/articles/web-security-xss/#co
 ## Unsubscribe Header:
 
 "List-Unsubscribe":
+
+
+## Threading
+
+https://www.jwz.org/doc/threading.html
+
+
+## Email Body Structure
+
+https://bowaggoner.com/bomail/writeups/mimes.html
+
+http://sgerwk.altervista.org/imapbodystructure.html
+

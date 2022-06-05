@@ -3,6 +3,7 @@ const asyncHandler = require('express-async-handler');
 
 const ImapPromise = require('../lib/ImapPromise');
 const Utils = require('../lib/Utils');
+const MessageFetcher = require('../lib/MessageFetcher');
 
 const HttpError = require('../lib/HttpError');
 const db = require('./db');
@@ -33,6 +34,27 @@ router.get('/conversations_and_mailboxes', asyncHandler(async (req, res) => {
 
 router.get('/conversation', asyncHandler(async (req, res) => {
     res.json(await req.account.get_conversation(req.query));
+}));
+
+router.get('/bodypart/:quid/:partid', asyncHandler(async (req, res) => {
+    
+    // Create message fetcher
+    let mf = new MessageFetcher(req.account.config);
+
+    await mf.open();
+
+    try
+    {
+        let part = await mf.fetchPart(req.params.quid, req.params.partid);
+
+        res.setHeader('content-type', `${part.type}/${part.subtype}`);
+        res.write(part.data, 'binary');
+        res.end(null, 'binary');
+    }
+    finally
+    {
+        await mf.close();
+    }
 }));
 
 

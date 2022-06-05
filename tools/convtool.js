@@ -8,6 +8,7 @@ const Imap = require('../lib/ImapPromise');
 const WorkerAccount = require('../lib/WorkerAccount');
 const SQL = require('../lib/SQL');
 const Utils = require('../lib/Utils');
+const MessageFetcher = require('../lib/MessageFetcher');
 
 let _action;
 
@@ -51,7 +52,7 @@ program.command('drop')
 
 
 program.command('list')
-    .description("Drop all conversations")
+    .description("List conversations in a mailbox")
     .argument("mailbox", "The mailbox to show")
     .option("--take", "The number of items to show", 25)
     .option("--skip", "The number of items to skip", 0)
@@ -104,6 +105,44 @@ program.command('list')
 
     }));
 
+program.command('fetch')
+    .description("Fetch a conversation")
+    .argument("conversation_id", "The conversation id")
+    .option('--text', "Get in plain text format")
+    .action((conversation_id, options) => register(async (account, config) => {
+
+        // Sync account
+        //await account.sync();
+
+        // Get the conversation
+        let c = await account.get_conversation({
+            conversation_id,
+        });
+
+        // Create message fetcher
+        let mf = new MessageFetcher(config);
+        await mf.open();
+
+        // Fetch all messages in the conversation
+        let promises = []
+        for (let m of c.messages)
+        {
+            promises.push(mf.fetch(m.quids, options.text ? 'text' : 'html')
+                .then(function(r) {
+                    m.parts = r.parts;
+                    m.attachments = r.attachments;
+                })
+            );
+        }
+        await Promise.all(promises);
+
+        // Close message fetcher
+        await mf.close();
+
+        console.log(JSON.stringify(c, null, 4));
+
+    }));
+
 
 program.parse();
 
@@ -146,7 +185,7 @@ program.parse();
     try
     {
         let start = Date.now();
-        await _action(account)
+        await _action(account, config)
         console.error(`Completed in ${Date.now() - start} ms`);
     }
     catch (err)

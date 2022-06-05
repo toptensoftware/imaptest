@@ -22,7 +22,20 @@
             ],
             "cwd": "${workspaceFolder}/tools",
             "type": "node",
-            "args": [ "sync" ]
+            //"args": [ "list", "--detail", "3", "Archive" ]
+            "args": [ "fetch", "919dd807b151e3db8b6359df8af28cc5@rocketskeleton.com"]
+        },
+        {
+            "name": "Run IMAPTool",
+            "program": "${workspaceFolder}/tools/imaptool.js",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "cwd": "${workspaceFolder}/tools",
+            "type": "node",
+            //"args": [ "list", "--detail", "3", "Archive" ]
+            "args": [ "-a", "tts", "catalog", "--mailbox", "Archive" ]
         },
         {
             "name": "API Server",

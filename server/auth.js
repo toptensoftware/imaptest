@@ -59,7 +59,8 @@ function setLoginKeyCookie(res, loginRecord, iv)
     };
 
     // Return csrf token
-    res.setHeader("x-csrf-token", loginRecord.csrf);
+    if (config.auth.use_csrf)
+        res.setHeader("x-csrf-token", loginRecord.csrf);
 
     // Return the login 
     let loginKey = `msk-${loginRecord.loginId}-${iv}-${loginRecord.rotation}`;
@@ -81,11 +82,11 @@ router.post('/login', asyncHandler(async (req, res) => {
         await Account.get(login.user, login.password);
 
         // Encrypt it
-        let encrypted = Utils.encryptJson(config.encryption_key, login);
+        let encrypted = Utils.encryptJson(config.auth.encryption_key, login);
 
         // Work out when the login expires
         // For non-persistent logins, keep them in the db for 1 day
-        let expiryDays = req.body.persistent ? config.persistent_login_days : 1
+        let expiryDays = req.body.persistent ? config.auth.persistent_login_days : 1
         let expiry = Date.now() + 1000 * 60 * 60 * 24 * expiryDays;
         
         // Store it
@@ -147,46 +148,55 @@ router.use(asyncHandler(async (req, res, next) => {
         throw new HttpError(401, "invalid key");
 
     // Decrypt record
-    let login = Utils.decryptJson(config.encryption_key, loginRecord.data, loginKey.iv);
+    let login = Utils.decryptJson(config.auth.encryption_key, loginRecord.data, loginKey.iv);
     if (loginRecord.user != login.user)
         throw new Error("invalid key");
 
     // Compromise detection
-    if (loginRecord.rotation != loginKey.rotation)
+    if (config.auth.rotate_login_key_seconds !== false)
     {
-        // Allow a 30-second grace period of using the old rotation key
-        if (loginRecord.prev_time == 0 || 
-            loginRecord.prev_time + 30 * 1000 < Date.now() / 1000 ||
-            loginRecord.prev_rotation != loginKey.rotation)
+        if (loginRecord.rotation != loginKey.rotation)
         {
-            throw new HttpError(401, "compromised key")
+            // Allow a 30-second grace period of using the old rotation key
+            if (loginRecord.prev_time == 0 || 
+                loginRecord.prev_time + 30 * 1000 < Date.now() / 1000 ||
+                loginRecord.prev_rotation != loginKey.rotation)
+            {
+                throw new HttpError(401, "compromised key")
+            }
         }
     }
 
     // Check CSRF token
-    if (loginRecord.csrf != req.headers['x-csrf-token'])
+    if (config.auth.use_csrf)
     {
-        // Allow a 30-second grace period of using the old rotation key
-        if (loginRecord.prev_time == 0 || 
-            loginRecord.prev_time + 30 * 1000 < Date.now() / 1000 ||
-            loginRecord.prev_csrf != req.headers['x-csrf-token'])
+        if (loginRecord.csrf != req.headers['x-csrf-token'])
         {
-            throw new HttpError(401, "compromised key");
+            // Allow a 30-second grace period of using the old rotation key
+            if (loginRecord.prev_time == 0 || 
+                loginRecord.prev_time + 30 * 1000 < Date.now() / 1000 ||
+                loginRecord.prev_csrf != req.headers['x-csrf-token'])
+            {
+                throw new HttpError(401, "compromised key");
+            }
         }
     }
 
     // Rotate login key
-    if (loginRecord.prev_time + 30 * 1000 < Date.now() / 1000)
+    if (config.auth.rotate_login_key_seconds !== false)
     {
-        loginRecord.rotation = Utils.random(16);
-        loginRecord.csrf = Utils.random(16);
-        db.run("UPDATE logins SET prev_rotation = rotation, prev_csrf = csrf, prev_time = ?, rotation=?, csrf=? WHERE loginId=?", 
-            Math.floor(Date.now() / 1000),
-            loginRecord.rotation,
-            loginRecord.csrf, 
-            loginRecord.loginId
-        );
-        setLoginKeyCookie(res, loginRecord, loginKey.iv);
+        if (loginRecord.prev_time + config.auth.rotate_login_key_seconds * 1000 < Date.now() / 1000)
+        {
+            loginRecord.rotation = Utils.random(16);
+            loginRecord.csrf = Utils.random(16);
+            db.run("UPDATE logins SET prev_rotation = rotation, prev_csrf = csrf, prev_time = ?, rotation=?, csrf=? WHERE loginId=?", 
+                Math.floor(Date.now() / 1000),
+                loginRecord.rotation,
+                loginRecord.csrf, 
+                loginRecord.loginId
+            );
+            setLoginKeyCookie(res, loginRecord, loginKey.iv);
+        }
     }
 
     // Attach the account to the request

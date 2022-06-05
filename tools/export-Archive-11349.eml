@@ -1,0 +1,149 @@
+Delivered-To: brobinson@toptensoftware.com
+Received: by 10.194.162.106 with SMTP id xz10csp87017wjb;
+        Sun, 19 Jan 2014 16:34:46 -0800 (PST)
+X-Received: by 10.69.1.104 with SMTP id bf8mr15365143pbd.75.1390178085410;
+        Sun, 19 Jan 2014 16:34:45 -0800 (PST)
+Return-Path: <rumba2@iinet.net.au>
+Received: from icp-osb-irony-out2.external.iinet.net.au (icp-osb-irony-out2.external.iinet.net.au. [203.59.1.218])
+        by mx.google.com with ESMTP id wm3si17891226pab.136.2014.01.19.16.34.43
+        for <brobinson@toptensoftware.com>;
+        Sun, 19 Jan 2014 16:34:45 -0800 (PST)
+Received-SPF: pass (google.com: best guess record for domain of rumba2@iinet.net.au designates 203.59.1.218 as permitted sender) client-ip=203.59.1.218;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: best guess record for domain of rumba2@iinet.net.au designates 203.59.1.218 as permitted sender) smtp.mail=rumba2@iinet.net.au
+X-IronPort-AV: E=Sophos;i="4.95,687,1384272000"; 
+   d="scan'208,217";a="175306138"
+Received: from unknown (HELO icp-osb-rumbabatch5) ([10.2.50.52])
+  by icp-osb-irony-out2.iinet.net.au with ESMTP; 20 Jan 2014 08:34:26 +0800
+Received: by icp-osb-rumbabatch5 (Postfix, from userid 1005)
+	id 49F4BF733E; Mon, 20 Jan 2014 08:34:26 +0800 (GMT-8)
+MIME-Version: 1.0
+Content-Transfer-Encoding: binary
+Content-Type: multipart/mixed; boundary="_----------=_139017762892749850"
+X-Task-Reluser: bradandjen
+X-Task-Tasktype: 1
+X-Mailer: MIME::Lite 3.020 (F2.74; A2.02; B3.07; Q3.07)
+Date: Mon, 20 Jan 2014 08:27:08 +0800
+To: brobinson@toptensoftware.com
+Subject: Please confirm payment details for Invoice #52296248
+From: accounts@iinet.net.au (iiNet Limited Billing Team)
+Message-Id: <20140120003426.49F4BF733E@icp-osb-rumbabatch5>
+
+This is a multi-part message in MIME format.
+
+--_----------=_139017762892749850
+MIME-Version: 1.0
+Content-Transfer-Encoding: binary
+Content-Type: multipart/alternative; boundary="_----------=_139017762892749851"
+X-Mailer: MIME::Lite 3.020 (F2.74; A2.02; B3.07; Q3.07)
+Date: Mon, 20 Jan 2014 08:27:08 +0800
+
+This is a multi-part message in MIME format.
+
+--_----------=_139017762892749851
+MIME-Version: 1.0
+Content-Disposition: inline
+Content-Length: 1066
+Content-Transfer-Encoding: binary
+Content-Type: text/plain
+X-Mailer: MIME::Lite 3.020 (F2.74; A2.02; B3.07; Q3.07)
+Date: Mon, 20 Jan 2014 08:27:08 +0800
+
+Unfortunately we were unsuccessful when we tried to debit your nominated credit card for $125.06 owing on invoice # 52296248. 
+
+The bank message we received was: Not sufficient funds (code 051)
+
+In case this was just a one-off occurrence, we'll try again in four days. Please be aware your services may be suspended if this second attempt fails.
+
+WHAT SHOULD I DO?
+1. If your credit card details have changed, you can update them by logging in to your Toolbox at https://toolbox.iinet.net.au.
+2. Click on 'update payment details' in the left-hand column, and then enter your new card details.
+3. Click on 'save' at the bottom of the screen to confirm your changes.
+
+iiNet uses a fancy 128-bit encryption for Toolbox. That's the same as online banking websites, so you don't need to worry about the security of your information.
+
+If you would like to make alternate payment arrangements, please feel free to reply to this email or call our Billing Team on 13 22 58, quoting your invoice number as a reference.
+
+Kind regards,
+
+Chelsea Gray
+Customer Experience Officer
+
+--_----------=_139017762892749851
+MIME-Version: 1.0
+Content-Disposition: inline
+Content-Length: 3885
+Content-Transfer-Encoding: binary
+Content-Type: text/html
+X-Mailer: MIME::Lite 3.020 (F2.74; A2.02; B3.07; Q3.07)
+Date: Mon, 20 Jan 2014 08:27:08 +0800
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Please confirm payment details for Invoice #52296248</title>
+</head>
+<body style="margin: 0;">
+
+<table width="100%" cellspacing="0" cellpadding="0">
+	<tr>
+		<td align="center">
+			<table width="580" cellspacing="0" cellpadding="0">
+				<tr valign="top">
+					<td width="30" align="right" rowspan="3" style="border-collapse: collapse;"><img src="http://www.iinet.net.au/email/img/email-gen-fadeleft.png" width="30" height="370" /></td>
+					<td align="center"><a href="http://www.iinet.net.au/"><img src="http://www.iinet.net.au/email/img/email-gen-logo.png" width="260" height="97" border="0" /></a></td>
+					<td align="center"><a href="https://toolbox.iinet.net.au/cgi-bin/contact_form.cgi?type=sales"><img src="http://www.iinet.net.au/email/img/email-gen-sales.png" width="51" height="97" border="0" /></a></td>
+					<td align="center"><a href="https://toolbox.iinet.net.au/cgi-bin/contact_form.cgi?type=support"><img src="http://www.iinet.net.au/email/img/email-gen-support.png" width="65" height="97" border="0" /></a></td>
+					<td align="center"><a href="https://toolbox.iinet.net.au/"><img src="http://www.iinet.net.au/email/img/email-gen-toolbox.png" width="67" height="97" border="0" /></a></td>
+					<td align="center"><a href="http://www.iinet.net.au/products/residential.html"><img src="http://www.iinet.net.au/email/img/email-gen-products.png" width="77" height="97" border="0" /></a></td>
+					<td width="30" align="right" rowspan="3" style="border-collapse: collapse;"><img src="http://www.iinet.net.au/email/img/email-gen-faderight.png" width="30" height="370" /></td>
+				</tr>
+				<tr valign="top">
+					<td width="520" colspan="5">
+						<table width="520" cellspacing="0" cellpadding="0">
+							<tr>
+								<td width="520" style="border-collapse: collapse;"><img src="http://www.iinet.net.au/email/img/email-gen-heading.png" width="520" height="33" /></td>
+							</tr>
+							<tr>
+								<td width="520" style="padding: 15px 20px; border: 1px solid #000; font: 11px/17px verdana, Helvetica, sans-serif; border-collapse: collapse; text-align: left;"><p>Hello Mr Robinson,<br />
+<br />
+Unfortunately we were unsuccessful when we tried to debit your nominated credit card for $125.06 owing on invoice # 52296248. <br />
+<br />
+The bank message we received was: Not sufficient funds (code 051)</p>
+<p>In case this was just a one-off occurrence, we'll try again in four days. Please be aware your services may be suspended if this second attempt fails.<br />
+<br />
+<strong>What should I do?</strong></p>
+<ol>
+    <li>If your credit card details have changed, you can update them by logging in to your  <a href="https://toolbox.iinet.net.au">Toolbox</a>. </li>
+    <li>Click on 'update payment details' in the left-hand column, and then enter your new card details. </li>
+    <li>Click on 'save' at the bottom of the screen to confirm your changes.</li>
+</ol>
+<p>iiNet uses a fancy 128-bit encryption for Toolbox. That&rsquo;s the same as online banking websites, so you don&rsquo;t need to worry about the security of your information.</p>
+<p>If you would like to make alternate payment arrangements, please feel free to reply to this email or call our Billing Team on 13 22 58, quoting your invoice number as a reference.<br />
+<br />
+Kind regards,<br />
+<br />
+<strong>Chelsea Gray</strong><br />
+Customer Experience Officer</p>                                                            </td>
+							<tr>
+						</table>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="5" style="padding: 20px 0;"><p style="font: 9px/14px verdana,helvetica,sans-serif; color: #888; text-align: center;">&nbsp;</p></td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+
+</body>
+</html>
+
+--_----------=_139017762892749851--
+
+
+--_----------=_139017762892749850--
+

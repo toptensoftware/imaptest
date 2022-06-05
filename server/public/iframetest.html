@@ -1,0 +1,17 @@
+<html>
+    <head>
+
+        <script>
+            function onFrameLoaded(frame)
+            {
+                let button = frame.contentDocument.getElementById("button");
+                button.addEventListener('click', () => alert("button clicked"));
+            }
+        </script>
+
+    </head>
+    <body>
+        <h1>iframe test</h1>
+        <iframe src="inner.html" style="border:none" sandbox onload="onFrameLoaded(this)"></iframe>
+    </body>
+</html>

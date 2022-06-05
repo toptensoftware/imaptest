@@ -2,6 +2,7 @@ const inspect = require('util').inspect;
 const fs = require('fs');
 const path = require('path');
 const glob = require('glob');
+const MultiValueMap = require('../lib/MultiValueMap');
 
 const { program } = require('commander');
 
@@ -342,6 +343,144 @@ program.command('import')
         }
 
     }));
+
+
+function restructure(struct)
+{
+    let root = struct[0];
+    root.subparts = struct.slice(1).map(x => restructure(x));;
+    return root;
+}
+
+    
+
+program.command('catalog')
+    .description("Build a catalog of content types and body structures")
+    .option('-m, --mailbox <mailbox>', "The mailbox name", "INBOX")
+    .action((options) => register(async (imap) => {
+
+        await imap.openBox(options.mailbox);
+
+        let encodings = new MultiValueMap();
+        let charsets = new MultiValueMap();
+        let types = new MultiValueMap();
+        let structs = new MultiValueMap();
+
+        function processPart(uid, part)
+        {
+            if (part.encoding)
+                encodings.add(part.encoding?.toLowerCase(), `${uid}-${part.partID}`);
+            if (part.params?.charset)
+                charsets.add(part.params.charset.toLowerCase(), `${uid}-${part.partID}`);
+            types.add(`${part.type}/${part.subtype}`, `${uid}-${part.partID}`)
+
+            for (let sp of part.subparts)
+            {
+                processPart(uid, sp);
+            }
+        }
+
+        function describeStruct(struct)
+        {
+            if (struct.disposition?.type == "attachment")
+            {
+                return "attachment";
+            }
+            if (struct.type == "image")
+                return "image";
+
+            let desc = struct.type;
+            if (struct.subtype)
+            {
+                desc += "/" + struct.subtype;
+            }
+            if (struct.disposition?.type)
+            {
+                desc += "/" + struct.disposition.type;
+            }
+            if (struct.subparts.length)
+            {
+                // Get subparts without attachments
+                let noAttachments = struct.subparts.filter(x => 
+                    x.disposition == null || x.disposition.type != "attachment");
+
+                // Filter images too
+                let noImages = noAttachments.filter(x => x.type != 'image')
+
+                // Describe the other parts
+                let descs = noImages.map(x => describeStruct(x));
+
+                // If there were attachments, note it
+                if(noAttachments.length != struct.subparts.length)
+                    descs.push("attachment");
+                if (noImages.length != noAttachments.length)
+                    descs.push("image");
+
+                desc += "(" + descs.join(",") + ")"
+            }
+
+            return desc;
+        }
+
+        let count = 0;
+
+        function process(attrs)
+        {
+            if ((count % 1000) == 0)
+            {
+                console.error(`processed ${count}`);
+            }
+            count++;
+
+            // Restructure for easier navigation
+            attrs.struct = restructure(attrs.struct);
+
+            processPart(attrs.uid, attrs.struct);
+
+            structs.add(describeStruct(attrs.struct), attrs.uid);
+        }
+
+        await new Promise((resolve, reject) => {
+
+            // Fetch 
+            let options =   {
+                struct: true
+            }
+            let fetch = imap.fetch("1:*", options);
+
+            let result;
+    
+            // Message content
+            fetch.on('message', (msg, seqno) => {
+
+                msg.once('attributes', (attrs) => {
+                    attributes = attrs;
+                })
+                msg.once('end', () => {
+                    process(attributes);
+                });
+            });
+
+            // Resolve/reject
+            fetch.once('error', (err) => {
+                reject(err)
+            });
+            fetch.once('end', () => {
+                resolve(result)
+            });
+        });
+
+        let r = {
+            encodings,
+            charsets,
+            types,
+            structs,
+        };
+
+        console.log(JSON.stringify(r, null, 4));
+
+    }));
+
 
 program.parse();
 

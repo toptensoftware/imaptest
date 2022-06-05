@@ -1,8 +1,10 @@
 {
     "data_dir": "../data",
 
-    "use_csrf_tokens": true,
-    "csrf_token_regenerate_seconds": 10,
+    "auth": {
+        "use_csrf": false,
+        "rotate_login_key_seconds": false
+    },
 
     "cors": {
         "origin": "http://localhost:3000",
