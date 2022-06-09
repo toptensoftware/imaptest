@@ -12,7 +12,6 @@
 - Show progress or explaination during first login delay
 - Show CC recipients on messages
 - Show + download attachments
-- Make sure links in emails have target="_blank"
 - Collapse gmail-quotes to <detail> sections
 - Allow some fore colors if in contrast to current background
 - Block quote colors (see Re: Another Message)

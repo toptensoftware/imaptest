@@ -128,12 +128,12 @@ export default defineStore('appState', {
             await api.post("/api/login", {
                 user, pass, persistent
             });
+
+            this.user = user;
     
             this._mode = null;
             await this.loadViewData();
             document.title = this.pageTitle;
-
-            this.user = user;
         },
 
         // Logout the current user
