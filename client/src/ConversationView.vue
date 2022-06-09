@@ -20,7 +20,7 @@ const state = useAppState();
                 <div class="date text-muted">{{ Utils.formatDateFromSecondsLong(m.date) }}</div>
                 <div class="to text-muted">to <EmailAddress :addr="m.to" /></div>
             </div> 
-            <div class="message-body" :class="{'color-reset': m.hasColor}" v-html="m.html"></div>
+            <div class="message-body" :class="{'color-reset': m.hasBackground || m.foreColors.length > 1}" v-html="m.html"></div>
             <hr />
         </div>
 

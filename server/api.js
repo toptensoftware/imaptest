@@ -51,7 +51,8 @@ router.get('/conversation', asyncHandler(async (req, res) => {
         // Convert to html
         let html = MessageToHtml(fs);
         m.html = html.html;
-        m.hasColor = html.hasColor;
+        m.hasBackground = html.hasBackground;
+        m.foreColors = html.foreColors;
         //m.rawParts = fs;
     }
 
