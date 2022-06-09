@@ -4,6 +4,7 @@ const asyncHandler = require('express-async-handler');
 const ImapPromise = require('../lib/ImapPromise');
 const Utils = require('../lib/Utils');
 const MessageFetcher = require('../lib/MessageFetcher');
+const MessageToHtml = require('../lib/MessageToHtml')
 
 const HttpError = require('../lib/HttpError');
 const db = require('./db');
@@ -17,44 +18,54 @@ router.get('/ping', asyncHandler(async (req, res) => {
 }));
 
 router.post('/sync', asyncHandler(async (req, res) => {
-    res.json(await req.account.sync());
+    res.json(await req.account.workerAccount.sync());
 }));
 
 router.get('/folders', asyncHandler(async (req, res) => {
-    res.json(await req.account.get_mailboxes());
+    res.json(await req.account.workerAccount.get_mailboxes());
 }));
 
 router.get('/conversations', asyncHandler(async (req, res) => {
-    res.json(await req.account.get_conversations(req.query));
+    res.json(await req.account.workerAccount.get_conversations(req.query));
 }));
 
 router.get('/conversations_and_mailboxes', asyncHandler(async (req, res) => {
-    res.json(await req.account.get_conversations_and_mailboxes(req.query));
+    res.json(await req.account.workerAccount.get_conversations_and_mailboxes(req.query));
 }));
 
 router.get('/conversation', asyncHandler(async (req, res) => {
-    res.json(await req.account.get_conversation(req.query));
+
+    // Get the conversation
+    let conv = await req.account.workerAccount.get_conversation(req.query);
+
+    // Fetch message bodies...
+    for (let m of conv.messages)
+    {
+        // Get the flattened message structure
+        let fs = await req.account.messageFetcher.fetchBodyText(m.quids, 'html');
+
+        // Get from/to
+        m.from = Utils.get_from_address(fs.headers);
+        m.to = Utils.get_to_address(fs.headers);
+
+        // Convert to html
+        let html = MessageToHtml(fs);
+        m.html = html.html;
+        m.hasColor = html.hasColor;
+        //m.rawParts = fs;
+    }
+
+    // Send it
+    res.json(conv);
 }));
 
 router.get('/bodypart/:quid/:partid', asyncHandler(async (req, res) => {
     
-    // Create message fetcher
-    let mf = new MessageFetcher(req.account.config);
+    let part = await req.account.messageFetcher.fetchPart(req.params.quid, req.params.partid);
 
-    await mf.open();
-
-    try
-    {
-        let part = await mf.fetchPart(req.params.quid, req.params.partid);
-
-        res.setHeader('content-type', `${part.type}/${part.subtype}`);
-        res.write(part.data, 'binary');
-        res.end(null, 'binary');
-    }
-    finally
-    {
-        await mf.close();
-    }
+    res.setHeader('content-type', `${part.type}/${part.subtype}`);
+    res.write(part.data, 'binary');
+    res.end(null, 'binary');
 }));
 
 

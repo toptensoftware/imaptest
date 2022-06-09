@@ -46,9 +46,9 @@ function navigateUp()
 
             <button class="icon-button" id="refresh" v-if="state.mode == 'normal'" @click="state.refresh()"><span class="symbol">refresh</span></button>
 
-            <div id="header-text" class="flex-grow-1" v-if="state.mode == 'select' || state.mode == 'conversation'">
+            <!--div id="header-text" class="flex-grow-1" v-if="state.mode == 'select' || state.mode == 'conversation'">
                 {{state.loadedConversation?.subject}}
-            </div>
+            </div-->
 
             <input type="text" id="search-box" placeholder="search" class="form-control flex-grow-1" v-if="state.mode == 'normal'">
 

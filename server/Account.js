@@ -4,6 +4,7 @@ const HttpError = require('../lib/HttpError');
 const AsyncLock = require('../lib/AsyncLock');
 const WorkerThread = require('../lib/WorkerThread');
 const config = require('./config');
+const MessageFetcher = require('../lib/MessageFetcher');
 
 class Account
 {
@@ -17,6 +18,7 @@ class Account
         this.workerAccount = null;
         this.lock = new AsyncLock();
         this.refCount = 0;
+        this.messageFetcher = null;
     }
 
     async open()
@@ -51,9 +53,13 @@ class Account
 
             this.workerAccount.config = accountConfig;
 
+            
             // Open it
             this.sync_revision = await this.workerAccount.openAndSync();
-
+            
+            // Open message fetcher too
+            this.messageFetcher = new MessageFetcher(accountConfig)
+            await this.messageFetcher.open();
         });
 
     }
@@ -63,6 +69,7 @@ class Account
         this.refCount--;
         if (this.refCount == 0)
         {
+            // Close worker thread
             await (this.lock.section(async () => {
                 await this.workerAccount.close();
                 await this.workerAccount.release();
@@ -71,6 +78,10 @@ class Account
                 this.workerThread = null;
                 this.sync_revision = 0;
             }));
+
+            // Close message fetcher
+            await this.messageFetcher.close();
+            this.messageFetcher = null;
         }
     }
 
@@ -126,7 +137,7 @@ async function getAccount(user, password)
     await account.open();
         
     // Return the worker account
-    return account.workerAccount;
+    return account;
 }
 
 module.exports = 

@@ -1,4 +1,24 @@
-## Misc TODO:
+## BUGS
+
+- No content shown immediately after login
+- Error recovery in MessageFetcher
+- Mail delivery failures not showing content
+- Mail delivery daemon display name missing in conversation list
+- Color detection only working on styles, not color/bg color attrib
+- Color detection not checking for background styles
+
+## TODO
+
+- Show progress or explaination during first login delay
+- Show CC recipients on messages
+- Show + download attachments
+- Make sure links in emails have target="_blank"
+- Collapse gmail-quotes to <detail> sections
+- Allow some fore colors if in contrast to current background
+- Block quote colors (see Re: Another Message)
+- Auto refresh every minute
+
+## UI TODO
 
 - read/unread icons
 - next/previous buttons on message view
@@ -7,7 +27,6 @@
 - delete forever when in Trash/Spam
 - empty trash/spam
 - click outside to close sidebar popup
-
 
 ## Material Symbols
 

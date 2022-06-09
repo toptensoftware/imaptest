@@ -11,7 +11,8 @@
 
     </head>
     <body>
-        <h1>iframe test</h1>
-        <iframe src="inner.html" style="border:none" sandbox onload="onFrameLoaded(this)"></iframe>
+        <h1>before</h1>
+        <iframe src="inner.html" style="border:none; background:yellow; width: 100%; height: 80vh" sandbox onload="onFrameLoaded(this)"></iframe>
+        <h1>after</h1>
     </body>
 </html>

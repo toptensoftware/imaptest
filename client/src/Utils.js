@@ -1,3 +1,4 @@
+
 function groupBy(array, groupFn)
 {
     let map = new Map();
@@ -56,7 +57,7 @@ function queryString(args)
         return "";
 }
 
-function formatDateFromSeconds(d)
+function formatDateFromSecondsShort(d)
 {
     d = new Date(d * 1000);
     let now = new Date();
@@ -75,6 +76,39 @@ function formatDateFromSeconds(d)
 }
 
 
+function formatDateFromSecondsLong(d)
+{
+    let now = new Date();
+
+    d = new Date(d * 1000);
+
+    // Main date/time component
+    let retv;
+    if (d.getDate() == now.getDate() && d.getMonth() == now.getMonth() && d.getFullYear() == now.getFullYear())
+        retv = d.toLocaleTimeString(undefined, { timeStyle: "short" });
+    else
+        retv = `${d.toLocaleDateString(undefined, { dateStyle: "full" } )} ${d.toLocaleTimeString(undefined, { timeStyle: "short"} )}`;
+
+    // Add relative hint
+    const deltaHours = (d.getTime() - now.getTime()) / (1000 * 60 * 60);
+    if (deltaHours < 0 && deltaHours > -24)
+    {
+        const fmt = new Intl.RelativeTimeFormat();
+        retv += ` (${fmt.format(Math.round(deltaHours), 'hours')})`
+    }
+    else
+    {
+        const deltaDays = deltaHours / 24;
+        if (deltaDays < 0 && deltaDays >= 7)
+        {
+            const fmt = new Intl.RelativeTimeFormat();
+            retv += ` (${fmt.format(Math.round(deltaHours), 'days')})`    
+        }
+    }
+
+    return retv;
+}
+
 
 
 export default {
@@ -83,5 +117,6 @@ export default {
     any,
     compareStrings,
     queryString,
-    formatDateFromSeconds,
+    formatDateFromSecondsShort,
+    formatDateFromSecondsLong,
 }

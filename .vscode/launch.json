@@ -94,7 +94,7 @@
     "compounds": [
         {
             "name": "API and Vue Servers",
-            "configurations": ["Vue Server", "API Server",  "Debug Browser"],
+            "configurations": ["Vue Server", "API Server" ],
             "stopAll": true,
         }
     ]

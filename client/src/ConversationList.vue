@@ -3,6 +3,7 @@
 import useAppState from './AppState';
 import { useRouter, useRoute } from 'vue-router';
 import Utils from './Utils.js';
+import EmailAddress from './EmailAddress.vue';
 
 const state = useAppState();
 const router = useRouter();
@@ -76,7 +77,7 @@ function onAction(event, action)
             <div class="detail-container">
 
                 <div class="participants">
-                    {{ conversation.participants }}
+                    <EmailAddress :addr="conversation.participants" :excludeMe="true" />
                     <button class="icon-button alignment-hack" style="width:0px;overflow:hidden;padding-left:0;padding-right:0"><span class="symbol">archive</span></button>
                 </div>
 
@@ -87,7 +88,7 @@ function onAction(event, action)
                 </div>
 
                 <div class=date>
-                    {{ Utils.formatDateFromSeconds(conversation.date) }}
+                    {{ Utils.formatDateFromSecondsShort(conversation.date) }}
                 </div>
 
                 <div class="actions">
