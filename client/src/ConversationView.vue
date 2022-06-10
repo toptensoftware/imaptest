@@ -18,7 +18,11 @@ const state = useAppState();
             <div class="message-header">
                 <div class="from"><EmailAddress :addr="m.from" /></div>
                 <div class="date text-muted">{{ Utils.formatDateFromSecondsLong(m.date) }}</div>
-                <div class="to text-muted">to <EmailAddress :addr="m.to" /></div>
+                <div class="to text-muted">
+                    <EmailAddress :addr="m.to" label="to" />
+                    <EmailAddress :addr="m.cc" label=", cc:" />
+                    <EmailAddress :addr="m.bcc" label=", bcc:" />
+                </div>
             </div> 
             <div class="message-body" :class="{'color-reset': m.hasBackground || m.foreColors.length > 1}" v-html="m.html"></div>
             <hr />

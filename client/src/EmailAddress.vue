@@ -5,9 +5,12 @@ import addrparser from 'address-rfc2822';
 import useAppState from './AppState';
 
 const state = useAppState();
-const props = defineProps(['addr', 'excludeMe']);
+const props = defineProps(['addr', 'excludeMe', 'label']);
 
 const addresses = computed(() => {
+    if (!props.addr)
+        return [];
+
     let addresses = addrparser.parse(props.addr).map(x => {
         if (x.address.toLowerCase() == state.user.toLowerCase())
         {
@@ -43,7 +46,15 @@ const addresses = computed(() => {
 </script>
 
 <template>
-<span class="email-address" v-for="a,i in addresses" :title="a.title"><template v-if="i>0">, </template>{{ a.display }}</span>
+
+<template v-if="addresses.length > 0">
+<template v-if="props.label">{{props.label}} </template>
+<span class="email-address" v-for="a,i in addresses" :title="a.title">
+    <template v-if="i>0">, </template>
+    {{ a.display }}
+</span>
+</template>
+
 </template>
 
 <styles>

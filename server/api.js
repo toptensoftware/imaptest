@@ -44,9 +44,8 @@ router.get('/conversation', asyncHandler(async (req, res) => {
         // Get the flattened message structure
         let fs = await req.account.messageFetcher.fetchBodyText(m.quids, 'html');
 
-        // Get from/to
-        m.from = Utils.get_from_address(fs.headers);
-        m.to = Utils.get_to_address(fs.headers);
+        // Get email addresses
+        Object.assign(m, Utils.get_email_addresses_from_headers(fs.headers));
 
         // Convert to html
         let html = MessageToHtml(fs);
