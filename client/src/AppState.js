@@ -9,6 +9,8 @@ export default defineStore('appState', {
         _mode: "starting",
         user: "huh@wah.com",
         folders: [],
+
+        progress: { complete: 0, message: "Synchronizing" },
         
         routeFolder: null,
         loadedFolderName: null,
@@ -108,6 +110,9 @@ export default defineStore('appState', {
         // Start the application - called from StartPage
         async start()
         {
+            this._mode = "starting";
+            this.progress = { complete: 0, message: "Synchronizing" };
+
             // Ping server to check if we have a login token
             // If this fails authError will be called and we'll transition
             // to the login page.
@@ -115,25 +120,31 @@ export default defineStore('appState', {
 
             this.user = r.user;
 
-            // If we get here the ping worked and we must be authorized
-            this._mode = null;
+            // Wait for sync to complete
+            await api.monitor_sync_progress();
 
             // Load the conversation list for what ever is on view
-            await this.loadViewData();
+            let loadPromise = this.loadViewData();
+
+            // Small delay to allow full progress bar
+            await new Promise((resolve) => setTimeout(resolve, 500));
+
+            await loadPromise;
+            
+            // If we get here the ping worked and we must be authorized
+            this._mode = null;
         },
 
         // Called from the login page on explicit user entered login
         async login(user, pass, persistent)
         {
+            // Do the login
             await api.post("/api/login", {
                 user, pass, persistent
             });
 
-            this.user = user;
-    
-            this._mode = null;
-            await this.loadViewData();
-            document.title = this.pageTitle;
+            // Start the app again
+            this.start();
         },
 
         // Logout the current user
@@ -151,11 +162,19 @@ export default defineStore('appState', {
             document.title = this.pageTitle;
         },
 
+        setProgress(complete, message)
+        {
+            if (message == "Ready")
+                message = "Loading...";
+            let progress = { complete, message };
+            this.progress = progress;
+        },
+
         // Load conversation list for the currently selected folder
         async loadViewData()
         {
             // Don't load conversations if not logged in or still starting
-            if (this._mode == 'starting' || this._mode == 'loggedOut')
+            if (this._mode == 'loggedOut')
                 return;
 
             if (this.routeConversationId)

@@ -69,5 +69,37 @@ router.get('/bodypart/:quid/:partid', asyncHandler(async (req, res) => {
     res.end(null, 'binary');
 }));
 
+router.get('/sync_progress', (req, res) => {
+
+    // Write current progress
+    let p = req.account.progress;
+    res.write(`${p.complete} ${p.message}\n`);
+
+    // Either end immediately or wait for progress...
+    if (p.complete >= 100)
+    {
+        res.end();
+    }
+    else
+    {
+        // Handler for progress change notifications
+        let handler = function(p) {
+
+            // Write update progress to output stream
+            res.write(`${p.complete} ${p.message}\n`);
+
+            // If finished, end the stream and remove handler
+            if (p.complete >= 100)
+            {
+                res.end();
+                req.account.off('progress', handler);
+            }
+        }
+
+        // Hook up handler to monitor progress
+        req.account.on('progress', handler);
+    }
+});
+
 
 module.exports = router;

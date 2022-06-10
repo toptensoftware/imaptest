@@ -5,20 +5,22 @@ const AsyncLock = require('../lib/AsyncLock');
 const WorkerThread = require('../lib/WorkerThread');
 const config = require('./config');
 const MessageFetcher = require('../lib/MessageFetcher');
+const { EventEmitter } = require('node:events');
 
-class Account
+class Account extends EventEmitter
 {
     constructor(user, password)
     {
+        super();
         this.user = user;
         this.password = password;
         this.access_time = 0;
-        this.sync_revision = 0;
         this.workerThread = null;
         this.workerAccount = null;
         this.lock = new AsyncLock();
         this.refCount = 0;
         this.messageFetcher = null;
+        this.progress = { complete: 0, message: "idle" };
     }
 
     async open()
@@ -30,7 +32,7 @@ class Account
         this.refCount++;
 
         // Quick exit if already open (typical case)
-        if (this.sync_revision != 0)
+        if (this.workerThread)
             return;
 
         // Make sure we only do this once
@@ -51,11 +53,19 @@ class Account
             this.workerAccount = await this.workerThread.createObject(
                         path.join(__dirname, "../lib/WorkerAccount"), null, accountConfig);
 
-            this.workerAccount.config = accountConfig;
+            this.workerAccount.on('progress', (p) => {
+                console.log(JSON.stringify(p));
+                this.progress = p;
+                this.emit('progress', p)
+            });
 
+            this.workerAccount.config = accountConfig;
             
             // Open it
-            this.sync_revision = await this.workerAccount.openAndSync();
+            await this.workerAccount.open();
+
+            // Start synchronize (don't wait)
+            this.workerAccount.sync();
             
             // Open message fetcher too
             this.messageFetcher = new MessageFetcher(accountConfig)
@@ -76,7 +86,6 @@ class Account
                 await this.workerThread.terminate();
                 this.workerAccount = null;
                 this.workerThread = null;
-                this.sync_revision = 0;
             }));
 
             // Close message fetcher

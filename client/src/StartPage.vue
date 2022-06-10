@@ -27,7 +27,10 @@ onMounted(async () => {
         <div class="text-center">
 
             <img src="/icon_dark_fine.svg" /><br/>
-            <div class="spinner-border text-success" role="status"></div>
+            <div class="progress mt-3 mb-2" style="width: 300px">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" :aria-valuenow="state.progress.complete" aria-valuemin="0" aria-valuemax="100" :style="{ width: state.progress.complete + '%' }"></div>
+            </div>
+            <div>{{state.progress.message}}</div>
 
         </div>    
     </div>
