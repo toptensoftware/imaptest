@@ -34,7 +34,7 @@ const state = useAppState();
             <hr />
         </div>
 
-        <pre v-if="true">{{JSON.stringify(state.loadedConversation, null, 4)}}</pre>
+        <pre v-if="false">{{JSON.stringify(state.loadedConversation, null, 4)}}</pre>
     </div>
 
 </template>

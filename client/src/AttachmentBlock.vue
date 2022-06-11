@@ -1,6 +1,7 @@
 <script>
 import { getClass, getClassWithColor } from 'file-icons-js';
 import 'file-icons-js/css/style.css';
+import Utils from './Utils';
 
 </script>
 <script setup>
@@ -12,9 +13,11 @@ const iconClass = getClass(props.attachment.filename);
 
 let fileExtension;
 let imageUrl;
+let havePreview = false;
 if (props.attachment.type.startsWith('image/'))
 {
     imageUrl = `/api/bodypart/${props.message.quid}/${props.attachment.partID}`;
+    havePreview = true;
 }
 else
 {
@@ -27,15 +30,17 @@ else
 <template>
 
 <a class="attachment-block" :href="`/api/bodypart/${props.message.quid}/${props.attachment.partID}?dl=1`">
-    <div class="attachment-fill text-secondary" :style="{'background-image':'url('+imageUrl+')'}">
-        <div class="large-icon" v-if="iconClass && !imageUrl">
-        <i :class="iconClass"></i>
-        </div>
-        <template v-else>{{fileExtension}}</template>
+    <div v-if="havePreview" class="attachment-fill" :style="{'background-image':'url('+imageUrl+')'}">
     </div>
-    <!--img v-if="imageUrl" :src="imageUrl" /-->
-    <div class="attachment-title mb-1">
-        {{props.attachment.filename}}
+    <div class="attachment-info" :class="{ 'hide-till-hover': havePreview }">
+        <div class="attachment-info-background text-secondary">
+            <div v-if="iconClass" class="large-icon" ><i :class="iconClass"></i></div>
+            <span v-else>{{fileExtension}}</span>
+        </div>
+        <div class="attachment-info-foreground">
+            <span class="attachment-size text-muted">{{Utils.niceBytes(props.attachment.size)}}</span>
+            <span class="attachment-filename">{{props.attachment.filename}}</span>
+        </div>
     </div>
 </a>
 
@@ -59,20 +64,6 @@ else
     overflow: hidden;
 }
 
-/*
-.attachment-block img
-{
-    object-fit: cover;
-    max-width: 100%;
-    height: auto;
-}
-*/
-
-.large-icon
-{
-    transform:scale(4) translateY(-0.4rem);
-}
-
 .attachment-fill
 {
     display: block;
@@ -81,27 +72,76 @@ else
     bottom: 0px;
     width: 100%;
     height: 100%;
-    text-align: center;
-    font-weight: bold;
-    font-size: 32px;
-    padding-top: 20px;
-    text-transform: uppercase;
-
     background-repeat:no-repeat;
     background-position:center;
     background-size:cover;
 }
 
-.attachment-title
+.attachment-info
 {
     display: block;
     position: absolute;
+    top: 0px;
     bottom: 0px;
     width: 100%;
+    height: 100%;
+}
+
+.attachment-info-background
+{
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    width: 100%;
+    height: 100%;
+
+    font-weight: bold;
+    font-size: 32px;
+    text-transform: uppercase;
+    background: var(--bs-dark);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.large-icon
+{
+    transform:scale(4) translateY(-0.4rem);
+}
+
+
+.attachment-info-foreground
+{
+    position: absolute;
+    width: 100%;
+    height: 100%;
     text-align: center;
     line-break: anywhere;
     font-size: smaller;
     padding: 3px;
+
+    display: flex;
+    justify-content: center;
+    align-items: end;
+}
+
+.attachment-size
+{
+    display: block;
+    position: absolute;
+    left:3px;
+    top:3px;
+}
+
+.attachment-block .hide-till-hover
+{
+    display:none;
+}
+
+.attachment-block:hover .hide-till-hover
+{
+    display:block;
 }
 
 </style>
