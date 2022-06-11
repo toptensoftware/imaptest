@@ -73,4 +73,25 @@ const state = useAppState();
     margin-bottom: 5px;
 }
 
+details.quoted_reply summary::marker 
+{ 
+    content: ""; 
+}
+
+details.quoted_reply summary span
+{
+    font-family: Verdana, Geneva, sans-serif;
+    font-size: 12px;
+    padding-left:10px;
+    padding-right:10px;
+    background-color:var(--bs-secondary);
+    border-radius: 10px;
+    padding-bottom:1px;
+}
+
+details.quoted_reply summary span:hover
+{
+    background-color:var(--bs-primary);
+}
+
 </style>
