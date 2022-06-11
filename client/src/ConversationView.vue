@@ -4,6 +4,7 @@ import { computed } from 'vue';
 import useAppState from './AppState';
 import Utils from './Utils.js';
 import EmailAddress from './EmailAddress.vue';
+import FolderIndicator from './FolderIndicator.vue';
 import AttachmentBlock from './AttachmentBlock.vue';
 
 const state = useAppState();
@@ -60,6 +61,7 @@ function resetColors(m)
                     <EmailAddress :addr="m.to" label="to" />
                     <EmailAddress :addr="m.cc" label=", cc:" />
                     <EmailAddress :addr="m.bcc" label=", bcc:" />
+                    <FolderIndicator :folders="m.mailboxes" />
                 </div>
             </div> 
             <div class="message-body" :class="{'color-reset': resetColors(m)}" v-html="m.html"></div>

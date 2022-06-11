@@ -3,22 +3,12 @@
 import { computed } from 'vue';
 import useAppState from './AppState';
 import Utils from './Utils';
+import { special_folders } from './SpecialFolderInfo';
 const state = useAppState();
-
-let folder_class = {
-    "\\Inbox": { group: "A", order: 0, icon: "inbox", title: "Inbox", },
-    "\\Drafts": { group: "A", order: 1, icon: "draft", title: "Drafts" },
-    "\\Snoozed": { group: "A", order: 2, icon: "snooze", title: "Snoozed" },
-    "\\Sent": { group: "A", order: 3, icon: "send", title: "Sent" },
-    "\\Archive": { group: "A", order: 4, icon: "archive", title: "Archive" },
-
-    "\\Junk": { group: "C", order: 1, icon: "report", title: "Junk" },
-    "\\Trash": { group: "C", order: 0, icon: "delete", title: "Trash" },
-}
 
 function getFolderGroup(folder)
 {
-    let fc = folder_class[folder.special_use_attrib];
+    let fc = special_folders[folder.special_use_attrib];
     if (fc)
         return fc.group;
     else
@@ -27,8 +17,8 @@ function getFolderGroup(folder)
 
 function compareFolders(a, b)
 {
-    let fca = folder_class[a.special_use_attrib];
-    let fcb = folder_class[b.special_use_attrib];
+    let fca = special_folders[a.special_use_attrib];
+    let fcb = special_folders[b.special_use_attrib];
     if (fca && fcb)
         return fca.order - fcb.order;
     
@@ -37,7 +27,7 @@ function compareFolders(a, b)
 
 function getFolderIcon(folder)
 {
-    let fc = folder_class[folder.special_use_attrib];
+    let fc = special_folders[folder.special_use_attrib];
     if (fc)
         return fc.icon;
 
@@ -46,7 +36,7 @@ function getFolderIcon(folder)
 
 function getFolderTitle(folder)
 {
-    let fc = folder_class[folder.special_use_attrib];
+    let fc = special_folders[folder.special_use_attrib];
     if (fc)
         return fc.title;
 
