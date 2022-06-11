@@ -6,6 +6,7 @@ const WorkerThread = require('../lib/WorkerThread');
 const config = require('./config');
 const MessageFetcher = require('../lib/MessageFetcher');
 const { EventEmitter } = require('node:events');
+const ImapPromise = require('../lib/ImapPromise');
 
 class Account extends EventEmitter
 {

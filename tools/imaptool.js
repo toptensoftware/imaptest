@@ -240,42 +240,30 @@ program.command('export')
         // Make sure it exists
         fs.mkdirSync(folder, { recursive: true })
 
-        await new Promise((resolve, reject) => {
+        // Fetch message
+        await imap.fetch(uids, { bodies: "" }, (msg, seqno) => {
 
-            // Fetch message
-            let fetch = imap.fetch(uids, { bodies: "" } );
+            let attributes = {};
 
-            // Message content
-            fetch.on('message', (msg, seqno) => {
-
-                let attributes = {};
-
-                msg.on('body', function(stream, info) 
-                {
-                    // Work out temp file name
-                    let tempfile = path.join(folder, `imap-export-${info.seqno}.tmp`)
-                    let tempstream = fs.createWriteStream(tempfile);
-                    stream.pipe(tempstream);
-                    stream.once('close', () => {
-                        // Rename file now that we know the uid
-                        let filename = options.out
-                            .replace(/\$mailbox/g, options.mailbox)
-                            .replace(/\$uid/g, attributes.uid);
-                        fs.renameSync(tempfile, filename);
-                        console.log(`${filename}`)
-                    })
-                });
-                msg.once('attributes', (attrs) => {
-                    attributes = attrs;
+            msg.on('body', function(stream, info) 
+            {
+                // Work out temp file name
+                let tempfile = path.join(folder, `imap-export-${info.seqno}.tmp`)
+                let tempstream = fs.createWriteStream(tempfile);
+                stream.pipe(tempstream);
+                stream.once('close', () => {
+                    // Rename file now that we know the uid
+                    let filename = options.out
+                        .replace(/\$mailbox/g, options.mailbox)
+                        .replace(/\$uid/g, attributes.uid);
+                    fs.renameSync(tempfile, filename);
+                    console.log(`${filename}`)
                 })
             });
-
-            // Resolve/reject
-            fetch.once('error', (err) => reject(err));
-            fetch.once('end', () => {
-                resolve()
-            });
-        });
+            msg.once('attributes', (attrs) => {
+                attributes = attrs;
+            })
+        })
 
     }));
 
