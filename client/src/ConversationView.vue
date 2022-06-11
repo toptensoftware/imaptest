@@ -3,6 +3,7 @@
 import useAppState from './AppState';
 import Utils from './Utils.js';
 import EmailAddress from './EmailAddress.vue';
+import AttachmentBlock from './AttachmentBlock.vue';
 
 const state = useAppState();
 
@@ -25,10 +26,15 @@ const state = useAppState();
                 </div>
             </div> 
             <div class="message-body" :class="{'color-reset': m.hasBackground || m.foreColors.length > 1}" v-html="m.html"></div>
+            <div class="message-attachments" v-if="m.attachments.length > 0">
+                <h6 class="mt-3" v-if="m.attachments.length == 1">1 Attachment</h6>
+                <h6 class="mt-3" v-if="m.attachments.length > 1">{{m.attachments.length}} Attachments</h6>
+                <AttachmentBlock :attachment="a" :message="m" v-for="a in m.attachments" />
+            </div>
             <hr />
         </div>
 
-        <pre v-if="false">{{JSON.stringify(state.loadedConversation, null, 4)}}</pre>
+        <pre v-if="true">{{JSON.stringify(state.loadedConversation, null, 4)}}</pre>
     </div>
 
 </template>

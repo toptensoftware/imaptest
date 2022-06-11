@@ -52,6 +52,12 @@ router.get('/conversation', asyncHandler(async (req, res) => {
         m.html = html.html;
         m.hasBackground = html.hasBackground;
         m.foreColors = html.foreColors;
+        m.attachments = fs.attachments.map(x => ({
+            filename: x.disposition?.params?.filename ?? x.params?.name ?? "untitled",
+            size: x.disposition?.params?.size ?? x.size ?? 0,
+            type: `${x.type}/${x.subtype}`,
+            partID: x.partID
+        }));
         //m.rawParts = fs;
     }
 
@@ -62,6 +68,15 @@ router.get('/conversation', asyncHandler(async (req, res) => {
 router.get('/bodypart/:quid/:partid', asyncHandler(async (req, res) => {
     
     let part = await req.account.messageFetcher.fetchPart(req.params.quid, req.params.partid);
+
+    if (parseInt(req.query.dl))
+    {
+        let filename = part.disposition?.params?.filename ?? part.params?.name ?? null;
+        if (filename)
+            res.setHeader('content-disposition', `attachment; filename=\"${filename}\"`);
+        else
+            res.setHeader('content-disposition', `attachment`);
+    }
 
     res.setHeader('content-type', `${part.type}/${part.subtype}`);
     res.write(part.data, 'binary');

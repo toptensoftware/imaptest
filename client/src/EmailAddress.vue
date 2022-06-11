@@ -57,5 +57,5 @@ const addresses = computed(() => {
 
 </template>
 
-<styles>
-</styles>
+<style>
+</style>
