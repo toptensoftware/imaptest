@@ -1,11 +1,48 @@
 <script setup>
 
+import { computed } from 'vue';
 import useAppState from './AppState';
 import Utils from './Utils.js';
 import EmailAddress from './EmailAddress.vue';
 import AttachmentBlock from './AttachmentBlock.vue';
 
 const state = useAppState();
+
+</script>
+
+<script>
+
+function resetColors(m)
+{
+    // If the message uses background colors then reset colors
+    if (m.hasBackground)
+        return true;
+    
+    // If the message doesn't have any foreground colors then we
+    // can use the theme colors
+    if (m.foreColors.length == 0)
+        return false;
+
+    // We might still be able to keep the theme colors if: all the used
+    // fore colors are in contrast to  the current background color
+
+    // Calculate background color luminance
+    let bodyStyle = window.getComputedStyle(document.getElementsByTagName("body")[0], null);
+    let backColor = Utils.parseRgbString(bodyStyle.backgroundColor);
+    let backLum = Utils.luminance(...backColor);
+
+    // Check all the used fore colors have enough contrast to keep the background color
+    for (let c of m.foreColors)
+    {
+        let foreLum = Utils.luminance(...Utils.parseColor(c));
+        let contrast = (Math.max(backLum, foreLum) + 0.05) / 
+                        (Math.min(backLum, foreLum) + 0.05)
+        if (contrast < 3)
+            return true;
+    }
+
+    return false;
+};
 
 </script>
 
@@ -25,7 +62,7 @@ const state = useAppState();
                     <EmailAddress :addr="m.bcc" label=", bcc:" />
                 </div>
             </div> 
-            <div class="message-body" :class="{'color-reset': m.hasBackground || m.foreColors.length > 1}" v-html="m.html"></div>
+            <div class="message-body" :class="{'color-reset': resetColors(m)}" v-html="m.html"></div>
             <div class="message-attachments" v-if="m.attachments.length > 0">
                 <h6 class="mt-3" v-if="m.attachments.length == 1">1 Attachment</h6>
                 <h6 class="mt-3" v-if="m.attachments.length > 1">{{m.attachments.length}} Attachments</h6>
@@ -34,7 +71,7 @@ const state = useAppState();
             <hr />
         </div>
 
-        <pre v-if="false">{{JSON.stringify(state.loadedConversation, null, 4)}}</pre>
+        <pre v-if="true">{{JSON.stringify(state.loadedConversation, null, 4)}}</pre>
     </div>
 
 </template>

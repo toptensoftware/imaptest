@@ -125,6 +125,39 @@ function niceBytes(x)
 }
 
 
+// https://www.w3.org/TR/WCAG21/#dfn-relative-luminance
+function luminance(R8bit,G8bit,B8bit)
+{
+    let RsRGB = R8bit/255;
+    let GsRGB = G8bit/255;
+    let BsRGB = B8bit/255;
+    let R = RsRGB <= 0.03928 ? RsRGB/12.92 : ((RsRGB+0.055)/1.055) ** 2.4;
+    let G = GsRGB <= 0.03928 ? GsRGB/12.92 : ((GsRGB+0.055)/1.055) ** 2.4;
+    let B = BsRGB <= 0.03928 ? BsRGB/12.92 : ((BsRGB+0.055)/1.055) ** 2.4;
+    return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+}
+
+// Parse a string in css rgb(r,g,b) format
+function parseRgbString(str)
+{
+    let m = str.match(/^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i);
+    if (m)
+        return [parseInt(m[1]), parseInt(m[2]), parseInt(m[3])];
+    return;
+}
+
+// Parse a color in any valid css format
+function parseColor(color)
+{
+    let div = document.createElement('div');
+    div.style.color = color;
+    div.style.display = "none";
+    document.body.appendChild(div);
+    let result = parseRgbString(getComputedStyle(div).color);
+    div.parentNode.removeChild(div);
+    return result;
+}
+
 export default {
     groupBy,
     orderBy,
@@ -134,4 +167,7 @@ export default {
     formatDateFromSecondsShort,
     formatDateFromSecondsLong,
     niceBytes,
+    luminance,
+    parseRgbString,
+    parseColor,
 }

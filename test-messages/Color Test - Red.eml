@@ -1,0 +1,47 @@
+Delivered-To: brad@rocketskeleton.com
+Return-Path: <testmessage@rocketskeleton.com>
+MIME-Version: 1.0
+Content-Transfer-Encoding: binary
+Content-Type: multipart/mixed; boundary="_----_0001"
+Date: Mon, 01 Jan 2022 09:00:00 +1100
+To: brad@rocketskeleton.com
+Subject: Color Test - Red
+From: testmessage@rocketskeleton.com
+Message-Id: <color-test-red@rocketskeleton.com>
+
+This is a multi-part message in MIME format.
+
+--_----_0001
+MIME-Version: 1.0
+Content-Transfer-Encoding: binary
+Content-Type: multipart/alternative; boundary="_----_0002"
+X-Mailer: MIME::Lite 3.020 (F2.74; A2.02; B3.07; Q3.07)
+Date: Mon, 20 Jan 2014 08:27:08 +0800
+
+This is a multi-part message in MIME format.
+
+--_----_0002
+MIME-Version: 1.0
+Content-Disposition: inline
+Content-Transfer-Encoding: binary
+Content-Type: text/plain
+
+Color Test Red
+
+--_----_0002
+MIME-Version: 1.0
+Content-Disposition: inline
+Content-Transfer-Encoding: binary
+Content-Type: text/html
+
+<html>
+<head><head>
+<body>
+<p>Color Test <span style="color:#FF0000">Red</span></p>
+</body>
+</html>
+--_----_0002--
+
+
+--_----_0001--
+
