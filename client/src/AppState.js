@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import api from './api';
 import Utils from './Utils';
+import { useRouter } from 'vue-router';
 
 export default defineStore('appState', {
 
@@ -72,6 +73,9 @@ export default defineStore('appState', {
             switch (state.mode)
             {
                 case 'starting':
+                    parts.push("Loading");
+                    break;
+
                 case 'loggedOut':
                     parts.push("Login");
                     break;
@@ -101,16 +105,29 @@ export default defineStore('appState', {
                     break;
             }
 
+            parts.push("Email Mockup");
+
             return parts.join(" - ");
         },
     },
 
     actions:
     {
+        updatePageTitle()
+        {
+            document.title = this.pageTitle;
+        },
+
+        setMode(mode)
+        {
+            this._mode = mode;
+            this.updatePageTitle();
+        },
+
         // Start the application - called from StartPage
         async start()
         {
-            this._mode = "starting";
+            this.setMode("starting");
             this.progress = { complete: 0, message: "Synchronizing" };
 
             // Ping server to check if we have a login token
@@ -132,7 +149,7 @@ export default defineStore('appState', {
             await loadPromise;
             
             // If we get here the ping worked and we must be authorized
-            this._mode = null;
+            this.setMode(null);
         },
 
         // Called from the login page on explicit user entered login
@@ -152,14 +169,16 @@ export default defineStore('appState', {
         {
             await api.post('/api/logout');
             this.user = null;
-            this._mode = "loggedOut";
+            this.routeConversationId = null;
+            this.loadedConversationId = null;
+            this.loadedConversation = null;
+            this.setMode("loggedOut");
         },
 
         // Called from API on any authentication error.
         authError()
         {
-            this._mode = "loggedOut";
-            document.title = this.pageTitle;
+            this.setMode("loggedOut");
         },
 
         setProgress(complete, message)
@@ -188,6 +207,8 @@ export default defineStore('appState', {
                     // Use a placeholder from the conversation list until the real conversation loaded
                     this.loadedConversation = this.conversations.find(x => x.conversation_id == this.routeConversationId);
 
+                    this.updatePageTitle();
+
                     // Fetch it
                     let options = { 
                         conversation_id: this.routeConversationId
@@ -200,6 +221,8 @@ export default defineStore('appState', {
                         this.loadedConversationId = this.routeConversationId;
                         this.loadedConversation = r;
                     }
+
+                    this.updatePageTitle();
                 }
             }
 
@@ -249,7 +272,7 @@ export default defineStore('appState', {
             else
                 this.routeConversationId = null;
 
-            document.title = this.pageTitle;
+            this.updatePageTitle();
 
             this.loadViewData();
         },
