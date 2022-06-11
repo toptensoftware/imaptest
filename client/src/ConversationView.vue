@@ -131,4 +131,11 @@ details.quoted_reply summary span:hover
     background-color:var(--bs-primary);
 }
 
+.message-body blockquote
+{
+    border-left: 2px solid var(--bs-primary);
+    padding-left: 1ex;
+    margin-left: 0.5ex;
+}
+
 </style>
