@@ -82,6 +82,9 @@ function resetColors(m)
 {
     background-color: #ffffff;
     color: #000000;
+    --bs-body-color: #000000;
+    --bs-secondary: #c0c0c0;
+    --bs-primary: #808080;
 }
 .color-reset a
 {
@@ -119,11 +122,13 @@ details.quoted_reply summary span
 {
     font-family: Verdana, Geneva, sans-serif;
     font-size: 12px;
-    padding-left:10px;
-    padding-right:10px;
-    background-color:var(--bs-secondary);
+    margin-left: 2px;
     border-radius: 10px;
+    padding-left:10px;
     padding-bottom:1px;
+    padding-right:10px;
+    color: var(--bs-body-color);
+    background-color:var(--bs-secondary);
 }
 
 details.quoted_reply summary span:hover

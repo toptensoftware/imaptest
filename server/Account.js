@@ -55,7 +55,6 @@ class Account extends EventEmitter
                         path.join(__dirname, "../lib/WorkerAccount"), null, accountConfig);
 
             this.workerAccount.on('progress', (p) => {
-                console.log(JSON.stringify(p));
                 this.progress = p;
                 this.emit('progress', p)
             });

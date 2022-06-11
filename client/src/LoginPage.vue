@@ -22,6 +22,7 @@ async function onSubmit()
     try
     {
         await state.login(user.value, pass.value, persistent.value);
+        router.push("/");
     }
     catch (err)
     {

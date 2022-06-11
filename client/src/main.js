@@ -1,6 +1,6 @@
 
 import { createApp, watch, markRaw } from 'vue'
-import { createPinia } from 'pinia'
+import { createPinia, storeToRefs  } from 'pinia'
 import App from './App.vue'
 import useAppState from './AppState';
 import router from './router'
@@ -20,6 +20,13 @@ const state = useAppState();
 
 router.beforeResolve((to) => {
     state.setRouteState(to.params);
+});
+
+const { mode } = storeToRefs(state)
+
+watch(mode, () => {
+    if (mode.value == 'loggedOut')
+        router.push("/");
 });
 
 app.mount('#app')
