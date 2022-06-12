@@ -6,12 +6,25 @@
     "configurations": [
         {
             "name": "Run Sandbox",
-            "program": "${workspaceFolder}/sandbox.js",
+            "program": "${workspaceFolder}/test/testConversations.js",
             "request": "launch",
             "skipFiles": [
                 "<node_internals>/**"
             ],
             "type": "node"
+        },
+        {
+            "name": "Debug Tests",
+            "request": "launch",
+            "runtimeArgs": [
+                "run-script",
+                "test"
+            ],
+            "runtimeExecutable": "npm",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "pwa-node"
         },
         {
             "name": "Run ConvTool",

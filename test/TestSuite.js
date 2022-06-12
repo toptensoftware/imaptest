@@ -13,7 +13,7 @@ let config = {
     tls: false,
     data_dir: "../data",
     db_name: "testsuite",
-    info: console.log,
+    //info: console.log,
     //debug: console.log
 };
 
@@ -27,8 +27,6 @@ class TestSuite
     }
     async run(callback)
     {
-        console.log("Running Test Suite...");
-
         try
         {
             let start = Date.now();
@@ -36,8 +34,6 @@ class TestSuite
             await this.init();
 
             await callback(this);
-
-            console.log(`\nTest suit finished in ${Date.now() - start} ms.`)
         }
         finally
         {
@@ -48,31 +44,27 @@ class TestSuite
     async init()
     {        
         // Open IMAP
-        console.log("Connecting IMAP")
         this.imap = new Imap(Object.assign({}, config, {
             //debug: console.log
         }));
         await this.imap.connect();
         
         // Clean up IMAP
-        console.log(`Opening and cleaning IMAP account`);
         let boxes = await this.imap.getBoxes();
         for (let b of Object.keys(boxes))
         {
             if (b != "INBOX")
             {
-                console.log(` - deleting mailbox '${b}'`)
                 await this.imap.delBox(b);
             }
         }
 
         // Create test mailboxes
-        console.log("Creating mailboxes");
         await this.imap.addBox("testbox");
         await this.imap.addBox("archive");
 
         // Create db account
-        console.log(`Opening and cleaning DB account`);
+        config.error = null;
         this.account = new WorkerAccount(config);
         await this.account.open();
         await this.account.dropEverything();
@@ -207,7 +199,7 @@ class TestSuite
             imap_references.sort();
             assert.deepEqual(imap_references, db_references);
         }
-        console.log(`Mailbox '${mailbox}' passed integrity check.`);
+        this.account.info && this.account.info(`Mailbox '${mailbox}' passed integrity check.`);
     }
 
     quiet(q)
