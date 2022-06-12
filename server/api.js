@@ -21,14 +21,23 @@ router.post('/sync', asyncHandler(async (req, res) => {
     res.json(await req.account.workerAccount.sync());
 }));
 
+// query params: 
+// since_mrev - get deltas since previous mailboxes list revision
 router.get('/folders', asyncHandler(async (req, res) => {
-    res.json(await req.account.workerAccount.get_mailboxes());
+    res.json(await req.account.workerAccount.get_mailboxes(req.query));
 }));
 
+// query params
+// skip - number of records to skip
+// take - number of records to take
+// mailbox - get conversations for a mailbox
+// since_crev - get changes to conversation list since previously returned crev number
 router.get('/conversations', asyncHandler(async (req, res) => {
     res.json(await req.account.workerAccount.get_conversations(req.query));
 }));
 
+// query params
+// any combination of parameters to /folders and /conversations
 router.get('/conversations_and_mailboxes', asyncHandler(async (req, res) => {
     res.json(await req.account.workerAccount.get_conversations_and_mailboxes(req.query));
 }));

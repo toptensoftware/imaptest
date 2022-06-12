@@ -55,7 +55,7 @@ test('Patch List (no changes)', () => {
     let p = lp.build_list_patch(a, b, compare, lp.build_patch);
     expect(p).toEqual([]);
 
-    lp.apply_list_patch(a, b, p);
+    lp.apply_list_patch(a, p);
     expect(a).toEqual(b);
 
 });
@@ -73,7 +73,7 @@ test('Patch List (insert leading item)', () => {
     let p = lp.build_list_patch(a, b, compare, lp.build_patch);
     expect(p.length).toEqual(1);
 
-    lp.apply_list_patch(a, b, p);
+    lp.apply_list_patch(a, p);
     expect(a).toEqual(b);
 
 });
@@ -93,7 +93,7 @@ test('Patch List (insert trailing item)', () => {
     let p = lp.build_list_patch(a, b, compare, lp.build_patch);
     expect(p.length).toEqual(1);
 
-    lp.apply_list_patch(a, b, p);
+    lp.apply_list_patch(a, p);
     expect(a).toEqual(b);
 
 });
@@ -114,7 +114,7 @@ test('Patch List (insert internal item)', () => {
     let p = lp.build_list_patch(a, b, compare, lp.build_patch);
     expect(p.length).toEqual(1);
 
-    lp.apply_list_patch(a, b, p);
+    lp.apply_list_patch(a, p);
     expect(a).toEqual(b);
 
 });
@@ -135,7 +135,7 @@ test('Patch List (insert multiple items)', () => {
     let p = lp.build_list_patch(a, b, compare, lp.build_patch);
     expect(p.length).toEqual(1);
 
-    lp.apply_list_patch(a, b, p);
+    lp.apply_list_patch(a, p);
     expect(a).toEqual(b);
 
 });
@@ -155,7 +155,7 @@ test('Patch List (delete leading item)', () => {
     let p = lp.build_list_patch(a, b, compare, lp.build_patch);
     expect(p.length).toEqual(1);
 
-    lp.apply_list_patch(a, b, p);
+    lp.apply_list_patch(a, p);
     expect(a).toEqual(b);
 
 });
@@ -176,7 +176,7 @@ test('Patch List (delete internal item)', () => {
     let p = lp.build_list_patch(a, b, compare, lp.build_patch);
     expect(p.length).toEqual(1);
 
-    lp.apply_list_patch(a, b, p);
+    lp.apply_list_patch(a, p);
     expect(a).toEqual(b);
 
 });
@@ -196,7 +196,7 @@ test('Patch List (delete trailing item)', () => {
     let p = lp.build_list_patch(a, b, compare, lp.build_patch);
     expect(p.length).toEqual(1);
 
-    lp.apply_list_patch(a, b, p);
+    lp.apply_list_patch(a, p);
     expect(a).toEqual(b);
 
 });
@@ -217,7 +217,7 @@ test('Patch List (delete multiple items)', () => {
     let p = lp.build_list_patch(a, b, compare, lp.build_patch);
     expect(p.length).toEqual(1);
 
-    lp.apply_list_patch(a, b, p);
+    lp.apply_list_patch(a, p);
     expect(a).toEqual(b);
 
 });
@@ -236,7 +236,7 @@ test('Patch List (edit single item)', () => {
     let p = lp.build_list_patch(a, b, compare, lp.build_patch);
     expect(p.length).toEqual(1);
 
-    lp.apply_list_patch(a, b, p);
+    lp.apply_list_patch(a, p);
     expect(a).toEqual(b);
 
 });
@@ -255,7 +255,7 @@ test('Patch List (edit consecutive items)', () => {
     let p = lp.build_list_patch(a, b, compare, lp.build_patch);
     expect(p.length).toEqual(1);
 
-    lp.apply_list_patch(a, b, p);
+    lp.apply_list_patch(a, p);
     expect(a).toEqual(b);
 
 });
@@ -276,7 +276,7 @@ test('Patch List (replace single item)', () => {
     let p = lp.build_list_patch(a, b, compare, lp.build_patch);
     expect(p.length).toEqual(2);
 
-    lp.apply_list_patch(a, b, p);
+    lp.apply_list_patch(a, p);
     expect(a).toEqual(b);
 
 });
@@ -296,7 +296,7 @@ test('Patch List (replace all items)', () => {
     let p = lp.build_list_patch(a, b, compare, lp.build_patch);
     expect(p.length).toEqual(2);
 
-    lp.apply_list_patch(a, b, p);
+    lp.apply_list_patch(a, p);
     expect(a).toEqual(b);
 
 });
@@ -319,7 +319,7 @@ test('Patch List (insert and delete)', () => {
     let p = lp.build_list_patch(a, b, compare, lp.build_patch);
     expect(p.length).toEqual(2);
 
-    lp.apply_list_patch(a, b, p);
+    lp.apply_list_patch(a, p);
     expect(a).toEqual(b);
 
 });
@@ -342,7 +342,7 @@ test('Patch List (delete and insert)', () => {
     let p = lp.build_list_patch(a, b, compare, lp.build_patch);
     expect(p.length).toEqual(2);
 
-    lp.apply_list_patch(a, b, p);
+    lp.apply_list_patch(a, p);
     expect(a).toEqual(b);
 
 });
@@ -365,7 +365,7 @@ test('Patch List (delete and insert and edit)', () => {
     let p = lp.build_list_patch(a, b, compare, lp.build_patch);
     expect(p.length).toEqual(3);
 
-    lp.apply_list_patch(a, b, p);
+    lp.apply_list_patch(a, p);
     expect(a).toEqual(b);
 
 });
@@ -390,7 +390,7 @@ test('Patch List (multiple delete and multiple insert and multiple edit)', () =>
     let p = lp.build_list_patch(a, b, compare, lp.build_patch);
     expect(p.length).toEqual(3);
 
-    lp.apply_list_patch(a, b, p);
+    lp.apply_list_patch(a, p);
     expect(a).toEqual(b);
 
 });
