@@ -1,6 +1,7 @@
 // Wrapper for all API end point calls
 import useAppState from './AppState';
 import Utils from './Utils';
+import ReconnectingEventSource from "reconnecting-eventsource";
 
 function wrapApi()
 {
@@ -84,7 +85,7 @@ function wrapApi()
     function open_events()
     {
         let state = useAppState();
-        events = new EventSource('/api/events', { withCredentials: true });
+        events = new ReconnectingEventSource('/api/events', { withCredentials: true });
 
         events.addEventListener('progress', (event) => {
             state.setProgress(JSON.parse(event.data));
