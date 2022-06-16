@@ -138,7 +138,7 @@ export default defineStore('appState', {
             this.user = r.user;
 
             // Wait for sync to complete
-            await api.monitor_sync_progress();
+            await api.open_events();
 
             // Load the conversation list for what ever is on view
             let loadPromise = this.loadViewData();
@@ -167,6 +167,7 @@ export default defineStore('appState', {
         // Logout the current user
         async logout()
         {
+            api.close_events();
             await api.post('/api/logout');
             this.user = null;
             this.routeConversationId = null;
@@ -181,11 +182,10 @@ export default defineStore('appState', {
             this.setMode("loggedOut");
         },
 
-        setProgress(complete, message)
+        setProgress(progress)
         {
-            if (message == "Ready")
-                message = "Loading...";
-            let progress = { complete, message };
+            if (progress.message == "Ready")
+                progress.message = "Loading...";
             this.progress = progress;
         },
 

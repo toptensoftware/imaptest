@@ -5,14 +5,13 @@ const AsyncLock = require('../lib/AsyncLock');
 const WorkerThread = require('../lib/WorkerThread');
 const config = require('./config');
 const MessageFetcher = require('../lib/MessageFetcher');
-const { EventEmitter } = require('node:events');
 const ImapPromise = require('../lib/ImapPromise');
+const EventStream = require('../lib/EventStream');
 
-class Account extends EventEmitter
+class Account
 {
     constructor(user, password)
     {
-        super();
         this.user = user;
         this.password = password;
         this.access_time = 0;
@@ -22,23 +21,23 @@ class Account extends EventEmitter
         this.refCount = 0;
         this.messageFetcher = null;
         this.progress = { complete: 0, message: "idle" };
+        this.eventStream = new EventStream();
     }
 
     async open()
     {
-        // Remember this account was accessed
-        this.access_time = Date.now();
-
-        // Increment the reference count
-        this.refCount++;
-
-        // Quick exit if already open (typical case)
-        if (this.workerThread)
-            return;
-
-        // Make sure we only do this once
         await this.lock.section(async () => {
-
+            
+            // Remember this account was accessed
+            this.access_time = Date.now();
+    
+            // Increment the reference count
+            this.refCount++;
+    
+            // Quick exit if already open (typical case)
+            if (this.workerThread)
+                return;
+    
             // Create account config
             let accountConfig = Object.assign(
                 { data_dir: config.data_dir }, 
@@ -56,7 +55,7 @@ class Account extends EventEmitter
 
             this.workerAccount.on('progress', (p) => {
                 this.progress = p;
-                this.emit('progress', p)
+                this.eventStream.send(p, 'progress');
             });
 
             this.workerAccount.config = accountConfig;

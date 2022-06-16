@@ -152,50 +152,58 @@ router.use(asyncHandler(async (req, res, next) => {
     if (loginRecord.user != login.user)
         throw new Error("invalid key");
 
-    // Compromise detection
-    if (config.auth.rotate_login_key_seconds !== false)
+    // For all requests except for the event stream, check for login key compromise,
+    // check csrf, and rotate the login key periodically.
+    // Event stream is handle specially since HTML EventSource can't pass custom headers
+    // and we don't want to have to specially handle the rotation of login keys in the
+    // event stream response.
+    if (req.url != '/events')
     {
-        if (loginRecord.rotation != loginKey.rotation)
+        // Compromise detection
+        if (config.auth.rotate_login_key_seconds !== false)
         {
-            // Allow a 30-second grace period of using the old rotation key
-            if (loginRecord.prev_time == 0 || 
-                loginRecord.prev_time + 30 * 1000 < Date.now() / 1000 ||
-                loginRecord.prev_rotation != loginKey.rotation)
+            if (loginRecord.rotation != loginKey.rotation)
             {
-                throw new HttpError(401, "compromised key")
+                // Allow a 30-second grace period of using the old rotation key
+                if (loginRecord.prev_time == 0 || 
+                    loginRecord.prev_time + 30 * 1000 < Date.now() / 1000 ||
+                    loginRecord.prev_rotation != loginKey.rotation)
+                {
+                    throw new HttpError(401, "compromised key")
+                }
             }
         }
-    }
 
-    // Check CSRF token
-    if (config.auth.use_csrf)
-    {
-        if (loginRecord.csrf != req.headers['x-csrf-token'])
+        // Check CSRF token
+        if (config.auth.use_csrf)
         {
-            // Allow a 30-second grace period of using the old rotation key
-            if (loginRecord.prev_time == 0 || 
-                loginRecord.prev_time + 30 * 1000 < Date.now() / 1000 ||
-                loginRecord.prev_csrf != req.headers['x-csrf-token'])
+            if (loginRecord.csrf != req.headers['x-csrf-token'])
             {
-                throw new HttpError(401, "compromised key");
+                // Allow a 30-second grace period of using the old rotation key
+                if (loginRecord.prev_time == 0 || 
+                    loginRecord.prev_time + 30 * 1000 < Date.now() / 1000 ||
+                    loginRecord.prev_csrf != req.headers['x-csrf-token'])
+                {
+                    throw new HttpError(401, "compromised key");
+                }
             }
         }
-    }
 
-    // Rotate login key
-    if (config.auth.rotate_login_key_seconds !== false)
-    {
-        if (loginRecord.prev_time + config.auth.rotate_login_key_seconds * 1000 < Date.now() / 1000)
+        // Rotate login key
+        if (config.auth.rotate_login_key_seconds !== false)
         {
-            loginRecord.rotation = Utils.random(16);
-            loginRecord.csrf = Utils.random(16);
-            db.run("UPDATE logins SET prev_rotation = rotation, prev_csrf = csrf, prev_time = ?, rotation=?, csrf=? WHERE loginId=?", 
-                Math.floor(Date.now() / 1000),
-                loginRecord.rotation,
-                loginRecord.csrf, 
-                loginRecord.loginId
-            );
-            setLoginKeyCookie(res, loginRecord, loginKey.iv);
+            if (loginRecord.prev_time + config.auth.rotate_login_key_seconds * 1000 < Date.now() / 1000)
+            {
+                loginRecord.rotation = Utils.random(16);
+                loginRecord.csrf = Utils.random(16);
+                db.run("UPDATE logins SET prev_rotation = rotation, prev_csrf = csrf, prev_time = ?, rotation=?, csrf=? WHERE loginId=?", 
+                    Math.floor(Date.now() / 1000),
+                    loginRecord.rotation,
+                    loginRecord.csrf, 
+                    loginRecord.loginId
+                );
+                setLoginKeyCookie(res, loginRecord, loginKey.iv);
+            }
         }
     }
 

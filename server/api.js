@@ -92,6 +92,10 @@ router.get('/bodypart/:quid/:partid', asyncHandler(async (req, res) => {
     res.end(null, 'binary');
 }));
 
+router.get('/events', (req, res) => {
+    return req.account.eventStream.middleware(req, res);
+});
+
 router.get('/sync_progress', (req, res) => {
 
     // Write current progress
