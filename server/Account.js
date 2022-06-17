@@ -22,6 +22,7 @@ class Account
         this.messageFetcher = null;
         this.progress = { complete: 0, message: "idle" };
         this.eventStream = new EventStream();
+        this.sync_info = { };
     }
 
     async open()
@@ -57,6 +58,12 @@ class Account
                 this.progress = p;
                 this.eventStream.send(p, 'progress');
             });
+            this.workerAccount.on('sync', (info) => {
+                if (this.sync_info.drev != info.drev)
+                    this.eventStream.send(info, 'sync');
+                this.sync_info = info;
+            });
+            this.workerAccount.on('info', console.log);
 
             this.workerAccount.config = accountConfig;
             

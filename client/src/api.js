@@ -88,7 +88,10 @@ function wrapApi()
         events = new ReconnectingEventSource('/api/events', { withCredentials: true });
 
         events.addEventListener('progress', (event) => {
-            state.setProgress(JSON.parse(event.data));
+            state.onServerProgress(JSON.parse(event.data));
+        });
+        events.addEventListener('sync', (event) => {
+            state.onServerDidSync(JSON.parse(event.data));
         });
     }
 

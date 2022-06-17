@@ -20,6 +20,7 @@ export default defineStore('appState', {
         routeConversationId: null,
         loadedConversationId: null,
         loadedConversation: null,
+        sync_info: null,
     }),
 
     getters: 
@@ -121,6 +122,15 @@ export default defineStore('appState', {
         setMode(mode)
         {
             this._mode = mode;
+
+            if (mode == 'loggedOut')
+            {
+                this.user = null;
+                this.routeConversationId = null;
+                this.loadedConversationId = null;
+                this.loadedConversation = null;
+            }
+
             this.updatePageTitle();
         },
 
@@ -169,10 +179,6 @@ export default defineStore('appState', {
         {
             api.close_events();
             await api.post('/api/logout');
-            this.user = null;
-            this.routeConversationId = null;
-            this.loadedConversationId = null;
-            this.loadedConversation = null;
             this.setMode("loggedOut");
         },
 
@@ -182,11 +188,26 @@ export default defineStore('appState', {
             this.setMode("loggedOut");
         },
 
-        setProgress(progress)
+        onServerProgress(progress)
         {
             if (progress.message == "Ready")
                 progress.message = "Loading...";
             this.progress = progress;
+        },
+
+        onServerDidSync(info)
+        {
+            if (this.sync_info != null)
+                this.refresh();
+            this.sync_info = info;
+        },
+
+        // Prod the server to resync now
+        async refresh()
+        {
+            this.loadedConversation = null;
+            this.loadedFolder = null;
+            await this.loadViewData();
         },
 
         // Load conversation list for the currently selected folder
@@ -229,7 +250,7 @@ export default defineStore('appState', {
             if (this.routeFolder != this.loadedFolder)
             {
                 // Clear currently loaded folder
-                this.loadedFolder = null;
+                this.loadedFolder = this.routeFolder;
 
                 // Fetch
                 let options = { 
@@ -240,19 +261,14 @@ export default defineStore('appState', {
                 // Same folder still selected?
                 if (this.routeFolder == options.mailbox)
                 {
-                    this.loadedFolder = this.routeFolder;
                     this.conversations.splice(0, this.conversations.length, ...r.conversations.conversations);
                     this.folders.splice(0, this.folders.length, ...r.mailboxes.mailboxes);
                 }
             }
+
+            this.updatePageTitle();
         },
 
-        // Prod the server to resync now
-        async refresh()
-        {
-            await api.post("/api/sync");
-            await this.loadViewData();
-        },
 
         // Called when route entered... update current state information
         // and load conversation list if changed
