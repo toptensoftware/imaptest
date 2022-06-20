@@ -12,9 +12,15 @@
     },
 
     "imap": {
-        "host": "mxdev.toptensoftware.com",
-        "port": 993,
-        "tls": true
+        "rocketskeleton.com": {
+            "host": "mxdev.toptensoftware.com"
+        },
+        "toptensoftware.com": {
+            "host": "mx2.toptensoftware.com"
+        },
+        "vercidium.com": {
+            "host": "mx2.toptensoftware.com"
+        }
     }
 }
 

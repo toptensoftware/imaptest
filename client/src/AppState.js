@@ -129,7 +129,9 @@ export default defineStore('appState', {
                 this.routeConversationId = null;
                 this.loadedConversationId = null;
                 this.loadedConversation = null;
-            }
+                this.conversations.splice(0, this.conversations.length, []);
+                this.folders.splice(0, this.folders.length, []);
+        }
 
             this.updatePageTitle();
         },
@@ -147,7 +149,7 @@ export default defineStore('appState', {
 
             this.user = r.user;
 
-            // Wait for sync to complete
+            // Open event stream
             await api.open_events();
 
             // Load the conversation list for what ever is on view

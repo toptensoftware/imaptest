@@ -36,4 +36,23 @@ let config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 // Merge with default
 config = _.merge({}, defaultConfig, config);
 
+// Given user email address get the IMAP configuration
+config.imapForUser = function(email)
+{
+    // Get the domain part of the email addres
+    let atPos = email.indexOf('@');
+    if (atPos < 0)
+        throw new Error("Invalid email address");
+    let domain = email.substring(atPos + 1);
+
+    // Find the config
+    let imap = this.imap[domain];
+
+    // And merge with defaults
+    return Object.assign({ 
+        port: 993,
+        tls: true,
+    }, imap);
+}
+
 module.exports = config;

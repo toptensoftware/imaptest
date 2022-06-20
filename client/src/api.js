@@ -87,12 +87,23 @@ function wrapApi()
         let state = useAppState();
         events = new ReconnectingEventSource('/api/events', { withCredentials: true });
 
+        let _resolve;
+        let finished_promise = new Promise((resolve, reject) => {
+            _resolve = resolve;
+        });
+
         events.addEventListener('progress', (event) => {
-            state.onServerProgress(JSON.parse(event.data));
+            let p = JSON.parse(event.data);
+            state.onServerProgress(p);
+            
+            if (p.complete == 100 && _resolve)
+                _resolve();
         });
         events.addEventListener('sync', (event) => {
             state.onServerDidSync(JSON.parse(event.data));
         });
+
+        return finished_promise;
     }
 
     function close_events()

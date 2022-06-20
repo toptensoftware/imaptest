@@ -35,6 +35,10 @@ class TestSuite
 
             await callback(this);
         }
+        catch (err)
+        {
+            throw err;
+        }
         finally
         {
             await this.finish();
@@ -65,6 +69,7 @@ class TestSuite
 
         // Create db account
         config.error = null;
+        config.no_auto_sync = true;
         this.account = new WorkerAccount(config);
         await this.account.open();
         await this.account.dropEverything();

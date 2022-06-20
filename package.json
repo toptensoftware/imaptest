@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest --runInBand ./test/api.test.js"
-},
+    "test": "jest --runInBand"
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {

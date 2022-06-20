@@ -42,7 +42,7 @@ class Account
             // Create account config
             let accountConfig = Object.assign(
                 { data_dir: config.data_dir }, 
-                config.imap, 
+                config.imapForUser(this.user), 
                 { user: this.user, password: this.password }
             );
 
@@ -121,7 +121,7 @@ async function getAccount(user, password)
             // Login to IMAP to verify new username/password
             try
             {
-                let imap_config = Object.assign({}, config.imap, { user, password });
+                let imap_config = Object.assign({}, config.imapForUser(user), { user, password });
                 imap = new ImapPromise(imap_config);
                 await imap.connect();
                 await imap.end();
